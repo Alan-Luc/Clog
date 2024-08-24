@@ -2,7 +2,9 @@ package main
 
 import (
 	"log"
-	"time"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/Alan-Luc/VertiLog/backend/database"
 	"github.com/Alan-Luc/VertiLog/backend/routes"
@@ -18,19 +20,29 @@ func init() {
 }
 
 func main() {
-	// get underlying sql connection
-	SQLdb, err := database.DB.DB()
-	if err != nil {
-		log.Fatal(err)
-	}
-	SQLdb.SetMaxOpenConns(25)
-	SQLdb.SetMaxIdleConns(25)
-	SQLdb.SetConnMaxLifetime(5 * time.Minute)
+	// get underlying sql connection and defer close
+	defer func() {
+		if err := database.SQLdb.Close(); err != nil {
+			log.Fatal("Error closing database connection... ", err)
+		} else {
+			log.Println("Closing database connection...")
+		}
+	}()
 
-	defer SQLdb.Close()
-
+	// router setup
 	r := routes.SetupRouter()
-	if err := r.Run(":8080"); err != nil {
-		log.Fatal("Failed to start server:", err)
-	}
+	go func() {
+		if err := r.Run(":8080"); err != nil {
+			log.Fatal("Failed to start server:", err)
+		}
+	}()
+
+	// Stop channel
+	sc := make(chan os.Signal, 1)
+	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
+
+	// block until signal
+	<-sc
+	log.Println("Gracefully shutting down...")
+
 }

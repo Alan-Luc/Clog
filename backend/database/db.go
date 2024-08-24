@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	_ "github.com/lib/pq"
 	"gorm.io/driver/postgres"
@@ -25,6 +26,14 @@ func ConnectDB() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	SQLdb, err = DB.DB()
+	if err != nil {
+		log.Fatal(err)
+	}
+	SQLdb.SetMaxOpenConns(25)
+	SQLdb.SetMaxIdleConns(25)
+	SQLdb.SetConnMaxLifetime(5 * time.Minute)
 
 	fmt.Println("Successfully connected to the database!")
 }
