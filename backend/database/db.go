@@ -21,7 +21,7 @@ func ConnectDB() {
 
 	// open GORM connection
 	DB, err = gorm.Open(postgres.Open(connStr), &gorm.Config{
-		PrepareStmt: false,
+		PrepareStmt: true,
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -36,4 +36,12 @@ func ConnectDB() {
 	SQLdb.SetConnMaxLifetime(5 * time.Minute)
 
 	fmt.Println("Successfully connected to the database!")
+}
+
+func CloseDB() {
+	if err := SQLdb.Close(); err != nil {
+		log.Fatal("Error closing database connection... ", err)
+	} else {
+		log.Println("Closing database connection...")
+	}
 }

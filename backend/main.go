@@ -20,22 +20,11 @@ func init() {
 }
 
 func main() {
-	// get underlying sql connection and defer close
-	defer func() {
-		if err := database.SQLdb.Close(); err != nil {
-			log.Fatal("Error closing database connection... ", err)
-		} else {
-			log.Println("Closing database connection...")
-		}
-	}()
+	// defer close
+	defer database.CloseDB()
 
 	// router setup
-	r := routes.SetupRouter()
-	go func() {
-		if err := r.Run(":8080"); err != nil {
-			log.Fatal("Failed to start server:", err)
-		}
-	}()
+	go routes.SetupRouter()
 
 	// Stop channel
 	sc := make(chan os.Signal, 1)

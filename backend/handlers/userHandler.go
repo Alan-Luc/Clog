@@ -1,13 +1,13 @@
 package handlers
 
 import (
-	"go/token"
 	"html"
 	"net/http"
 	"strings"
 
 	"github.com/Alan-Luc/VertiLog/backend/database"
 	"github.com/Alan-Luc/VertiLog/backend/models"
+	"github.com/Alan-Luc/VertiLog/backend/utils/auth"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -76,14 +76,13 @@ func LoginUser(ctx *gin.Context) {
 	} else {
 		ctx.JSON(http.StatusOK, gin.H{"token": jwt})
 	}
-
 }
 
 func VerifyUser(username, password *string) (string, error) {
 	var err error
 	var user models.User
 	// check if user in db
-	if err = database.DB.Model(&models.User{}).Find(&user, username).Error; err != nil {
+	if err = database.DB.Model(&models.User{}).Where("username = ?", username).Find(&user).Error; err != nil {
 		return "", err
 	}
 
@@ -94,7 +93,7 @@ func VerifyUser(username, password *string) (string, error) {
 		return "", err
 	}
 
-	jwt, err := auth.GenerateToken(user.ID)
+	jwt, err := auth.GenerateJWT(user.ID)
 	if err != nil {
 		return "", err
 	}
