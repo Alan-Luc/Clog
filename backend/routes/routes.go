@@ -12,7 +12,7 @@ import (
 func SetupRouter() {
 	router := gin.Default()
 
-	// user routes
+	// user auth routes
 	router.POST("/register", handlers.RegisterUser)
 	router.POST("/login", handlers.LoginUser)
 
@@ -22,6 +22,13 @@ func SetupRouter() {
 	{
 		protected.GET("/sessions", func(ctx *gin.Context) {
 			ctx.JSON(http.StatusOK, gin.H{"pogs": "on dogs"})
+		})
+		protected.GET("/user", func(ctx *gin.Context) {
+			id, err := auth.ExtractUserIdFromJWT(ctx)
+			if err != nil {
+				ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			}
+			ctx.JSON(http.StatusOK, gin.H{"userId": id})
 		})
 	}
 

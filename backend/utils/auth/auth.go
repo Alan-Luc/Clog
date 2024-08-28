@@ -2,6 +2,7 @@ package auth
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -40,21 +41,22 @@ func ValidateJWT(ctx *gin.Context) error {
 	// useful if you use multiple keys for your application.  The standard is to use 'kid' in the
 	// head of the token to identify which key to use, but the parsed token (head and claims) is provided
 	// to the callback, providing flexibility.
-	_, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
-		// validate the alg
-		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("Unexpected signing method: %v", t.Header["alg"])
-		}
-
-		// return api secret
-		return []byte(os.Getenv("API_SECRET")), nil
-	})
-
+	_, err := jwt.Parse(tokenString, ParseJWT)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func ParseJWT(t *jwt.Token) (interface{}, error) {
+	// validate the alg
+	if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+		return nil, fmt.Errorf("Unexpected signing method: %v", t.Header["alg"])
+	}
+
+	// return api secret
+	return []byte(os.Getenv("API_SECRET")), nil
 }
 
 func ExtractJWT(ctx *gin.Context) string {
@@ -66,6 +68,27 @@ func ExtractJWT(ctx *gin.Context) string {
 	}
 
 	return ""
+}
+
+func ExtractUserIdFromJWT(ctx *gin.Context) (int, error) {
+	tokenString := ExtractJWT(ctx)
+	t, err := jwt.Parse(tokenString, ParseJWT)
+	if err != nil {
+		return 0, err
+	}
+
+	claims, ok := t.Claims.(jwt.MapClaims)
+	log.Println(claims["userId"])
+	if ok && t.Valid {
+		userId, ok := claims["userId"].(float64)
+		if !ok {
+			return 0, nil
+		} else {
+			return int(userId), nil
+		}
+	}
+
+	return 0, nil
 }
 
 func JWTAuthMiddleWare() gin.HandlerFunc {

@@ -104,3 +104,12 @@ func VerifyUser(username, password *string) (string, error) {
 func VerifyPassword(hashedPw, password string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hashedPw), []byte(password))
 }
+
+func GetCurrentUserId(ctx *gin.Context) (int, error) {
+	userId, err := auth.ExtractUserIdFromJWT(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	return userId, nil
+}
