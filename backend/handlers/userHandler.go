@@ -8,35 +8,34 @@ import (
 	"github.com/Alan-Luc/VertiLog/backend/database"
 	"github.com/Alan-Luc/VertiLog/backend/models"
 	"github.com/Alan-Luc/VertiLog/backend/utils/auth"
+	"github.com/Alan-Luc/VertiLog/backend/utils/gContext"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 )
 
 func RegisterUser(ctx *gin.Context) {
-	var registerInput models.User
+	var user models.User
 	var err error
 
-	if err = ctx.ShouldBindJSON(&registerInput); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	err = ctx.ShouldBindJSON(&user)
+	if gContext.HandleReqErrorWithStatus(ctx, err, http.StatusBadRequest) {
 		return
 	}
 
-	err = PrepareUser(&registerInput)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	err = PrepareUser(&user)
+	if gContext.HandleReqErrorWithStatus(ctx, err, http.StatusInternalServerError) {
 		return
 	}
 
-	err = CreateUser(&registerInput)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	err = CreateUser(&user)
+	if gContext.HandleReqErrorWithStatus(ctx, err, http.StatusInternalServerError) {
 		return
-	} else {
-		ctx.JSON(http.StatusOK, gin.H{
-			"message": "User registered successfully",
-			"user_id": registerInput.ID,
-		})
 	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "User registered successfully",
+		"user_id": user,
+	})
 }
 
 func CreateUser(u *models.User) error {
@@ -64,23 +63,22 @@ func LoginUser(ctx *gin.Context) {
 	var loginInput models.User
 	var err error
 
-	if err = ctx.ShouldBindJSON(&loginInput); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error ": err.Error()})
+	err = ctx.ShouldBindJSON(&loginInput)
+	if gContext.HandleReqErrorWithStatus(ctx, err, http.StatusBadRequest) {
 		return
 	}
 
 	jwt, err := VerifyUser(&loginInput.Username, &loginInput.Password)
-	if err != nil {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"Invalid credentials ": err.Error()})
+	if gContext.HandleReqErrorWithStatus(ctx, err, http.StatusUnauthorized) {
 		return
-	} else {
-		ctx.JSON(http.StatusOK, gin.H{"token": jwt})
 	}
+
+	ctx.JSON(http.StatusOK, gin.H{"token": jwt})
 }
 
 func VerifyUser(username, password *string) (string, error) {
-	var err error
 	var user models.User
+	var err error
 	// check if user in db
 	if err = database.DB.Model(&models.User{}).Where("username = ?", username).Find(&user).Error; err != nil {
 		return "", err
@@ -112,4 +110,15 @@ func GetCurrentUserId(ctx *gin.Context) (int, error) {
 	}
 
 	return userId, nil
+}
+
+func GetCurrentUser(userId int) (models.User, error) {
+	var user models.User
+	var err error
+	// check if user in db
+	if err = database.DB.Model(&models.User{}).Where("id = ?", userId).Find(&user).Error; err != nil {
+		return models.User{}, err
+	}
+
+	return user, nil
 }

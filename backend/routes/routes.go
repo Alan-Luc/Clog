@@ -12,27 +12,35 @@ import (
 func SetupRouter() {
 	router := gin.Default()
 
-	// user auth routes
-	router.POST("/register", handlers.RegisterUser)
-	router.POST("/login", handlers.LoginUser)
+	// public routes
+	authRoutes(router.Group("/"))
 
 	// protected routes
 	protected := router.Group("/app")
 	protected.Use(auth.JWTAuthMiddleWare())
-	{
-		protected.GET("/sessions", func(ctx *gin.Context) {
-			ctx.JSON(http.StatusOK, gin.H{"pogs": "on dogs"})
-		})
-		protected.GET("/user", func(ctx *gin.Context) {
-			id, err := auth.ExtractUserIdFromJWT(ctx)
-			if err != nil {
-				ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			}
-			ctx.JSON(http.StatusOK, gin.H{"userId": id})
-		})
-	}
+	sessionRoutes(protected)
+	climbRoutes(protected)
 
 	if err := router.Run(":8080"); err != nil {
 		log.Fatal("Failed to start server:", err)
 	}
+}
+
+// Route grouping
+func authRoutes(router *gin.RouterGroup) {
+	router.POST("/register", handlers.RegisterUser)
+	router.POST("/login", handlers.LoginUser)
+}
+
+func sessionRoutes(router *gin.RouterGroup) {
+	router.GET("/sessions", func(ctx *gin.Context) {
+		ctx.JSON(http.StatusOK, gin.H{"pogs": "on dogs"})
+	})
+}
+
+func climbRoutes(router *gin.RouterGroup) {
+	router.GET("/climbs", func(ctx *gin.Context) {
+		ctx.JSON(http.StatusOK, gin.H{"hello": "world"})
+	})
+	router.POST("/logClimb", handlers.LogClimb)
 }
