@@ -65,6 +65,7 @@ func PrepareClimb(userId int, c *models.Climb) error {
 	c.SessionID = sessionId
 	c.RouteName = html.EscapeString(strings.TrimSpace(c.RouteName))
 	c.Date = today
+	c.Load = c.CalculateLoad()
 
 	return nil
 }
@@ -80,7 +81,6 @@ func GetCurrentSessionId(userId int) (int, error) {
 	err = database.DB.
 		Model(&models.Session{}).
 		Where("user_id = ? AND date = ?", userId, today).
-		// truncate time
 		Take(&session).
 		Error
 
@@ -89,10 +89,9 @@ func GetCurrentSessionId(userId int) (int, error) {
 			// if there is no current session, create today's session
 			session = models.Session{
 				UserID: userId,
-				Date:   today, // Truncate time portion
+				Date:   today,
 			}
-			err = database.DB.Create(&session).Error
-			if err != nil {
+			if err = database.DB.Create(&session).Error; err != nil {
 				return 0, err
 			}
 		} else {
