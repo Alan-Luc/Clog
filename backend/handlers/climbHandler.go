@@ -19,22 +19,23 @@ func LogClimb(ctx *gin.Context) {
 	var err error
 
 	err = ctx.ShouldBindJSON(&climb)
-	if gContext.HandleReqErrorWithStatus(ctx, err, http.StatusBadRequest) {
+	if gContext.HandleReqError(ctx, err, http.StatusBadRequest) {
 		return
 	}
 
 	userId, err := auth.ExtractUserIdFromJWT(ctx)
-	if gContext.HandleReqErrorWithStatus(ctx, err, http.StatusInternalServerError) {
+	if gContext.HandleReqError(ctx, err, http.StatusInternalServerError) {
 		return
 	}
+	climb.UserID = userId
 
-	err = PrepareClimb(userId, &climb)
-	if gContext.HandleReqErrorWithStatus(ctx, err, http.StatusInternalServerError) {
+	err = PrepareClimb(&climb)
+	if gContext.HandleReqError(ctx, err, http.StatusInternalServerError) {
 		return
 	}
 
 	err = CreateClimb(&climb)
-	if gContext.HandleReqErrorWithStatus(ctx, err, http.StatusInternalServerError) {
+	if gContext.HandleReqError(ctx, err, http.StatusInternalServerError) {
 		return
 	}
 
@@ -52,52 +53,62 @@ func CreateClimb(c *models.Climb) error {
 	return nil
 }
 
-func PrepareClimb(userId int, c *models.Climb) error {
-	sessionId, err := GetCurrentSessionId(userId)
+func PrepareClimb(c *models.Climb) error {
+	session, err := GetCurrentSession(c.UserID, &c.Date)
 	if err != nil {
 		return err
 	}
 
-	// get today's date with time set to 00:00:00
-	today := time.Now().UTC().Truncate(24 * time.Hour)
-
-	c.UserID = userId
-	c.SessionID = sessionId
+	c.SessionID = session.ID
 	c.RouteName = html.EscapeString(strings.TrimSpace(c.RouteName))
-	c.Date = today
 	c.Load = c.CalculateLoad()
 
 	return nil
 }
 
-func GetCurrentSessionId(userId int) (int, error) {
+func GetCurrentSession(userId int, date *time.Time) (*models.Session, error) {
 	var session models.Session
 	var err error
+	var sessionDate time.Time
 
 	// get today's date with time set to 00:00:00
+	// if there is no current session, create new session
 	today := time.Now().UTC().Truncate(24 * time.Hour)
-
-	// check if today's session already exists for curr user
-	err = database.DB.
-		Model(&models.Session{}).
-		Where("user_id = ? AND date = ?", userId, today).
-		Take(&session).
-		Error
-
-	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			// if there is no current session, create today's session
-			session = models.Session{
-				UserID: userId,
-				Date:   today,
-			}
-			if err = database.DB.Create(&session).Error; err != nil {
-				return 0, err
-			}
-		} else {
-			return 0, err
-		}
+	if date == nil {
+		sessionDate = today
+	} else {
+		sessionDate = *date
 	}
 
-	return session.ID, nil
+	// check if today's session already exists for curr user
+	// transaction to avoid race conditions
+	err = database.DB.Transaction(func(tx *gorm.DB) error {
+		err := tx.
+			Where("user_id = ? AND date = ?", userId, sessionDate).
+			Take(&session).
+			Error
+		if err != nil {
+			if err == gorm.ErrRecordNotFound {
+				// if there is no current session, create new session
+				session = models.Session{
+					UserID: userId,
+					Date:   sessionDate,
+				}
+				// create session in transaction
+				if err = tx.Create(&session).Error; err != nil {
+					return err // rollback transaction if error
+				}
+			} else {
+				return err
+			}
+		}
+		// if no errors in transaction
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &session, nil
 }

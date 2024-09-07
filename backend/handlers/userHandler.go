@@ -18,17 +18,17 @@ func RegisterUser(ctx *gin.Context) {
 	var err error
 
 	err = ctx.ShouldBindJSON(&user)
-	if gContext.HandleReqErrorWithStatus(ctx, err, http.StatusBadRequest) {
+	if gContext.HandleReqError(ctx, err, http.StatusBadRequest) {
 		return
 	}
 
 	err = PrepareUser(&user)
-	if gContext.HandleReqErrorWithStatus(ctx, err, http.StatusInternalServerError) {
+	if gContext.HandleReqError(ctx, err, http.StatusInternalServerError) {
 		return
 	}
 
 	err = CreateUser(&user)
-	if gContext.HandleReqErrorWithStatus(ctx, err, http.StatusInternalServerError) {
+	if gContext.HandleReqError(ctx, err, http.StatusInternalServerError) {
 		return
 	}
 
@@ -64,12 +64,12 @@ func LoginUser(ctx *gin.Context) {
 	var err error
 
 	err = ctx.ShouldBindJSON(&loginInput)
-	if gContext.HandleReqErrorWithStatus(ctx, err, http.StatusBadRequest) {
+	if gContext.HandleReqError(ctx, err, http.StatusBadRequest) {
 		return
 	}
 
 	jwt, err := VerifyUser(&loginInput.Username, &loginInput.Password)
-	if gContext.HandleReqErrorWithStatus(ctx, err, http.StatusUnauthorized) {
+	if gContext.HandleReqError(ctx, err, http.StatusUnauthorized) {
 		return
 	}
 
