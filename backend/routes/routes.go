@@ -33,9 +33,7 @@ func authRoutes(router *gin.RouterGroup) {
 }
 
 func sessionRoutes(router *gin.RouterGroup) {
-	router.GET("/sessions", func(ctx *gin.Context) {
-		ctx.JSON(http.StatusOK, gin.H{"pogs": "on dogs"})
-	})
+	router.GET("/sessions/:id", handlers.GetSession)
 }
 
 func climbRoutes(router *gin.RouterGroup) {

@@ -4,14 +4,12 @@ import (
 	"html"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/Alan-Luc/VertiLog/backend/database"
 	"github.com/Alan-Luc/VertiLog/backend/models"
 	"github.com/Alan-Luc/VertiLog/backend/utils/auth"
 	"github.com/Alan-Luc/VertiLog/backend/utils/gContext"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 func LogClimb(ctx *gin.Context) {
@@ -24,7 +22,7 @@ func LogClimb(ctx *gin.Context) {
 	}
 
 	userId, err := auth.ExtractUserIdFromJWT(ctx)
-	if gContext.HandleReqError(ctx, err, http.StatusInternalServerError) {
+	if gContext.HandleReqError(ctx, err, http.StatusUnauthorized) {
 		return
 	}
 	climb.UserID = userId
@@ -45,6 +43,7 @@ func LogClimb(ctx *gin.Context) {
 	})
 }
 
+// helpers
 func CreateClimb(c *models.Climb) error {
 	// create climb for requesting user
 	if err := database.DB.Create(&c).Error; err != nil {
@@ -54,7 +53,7 @@ func CreateClimb(c *models.Climb) error {
 }
 
 func PrepareClimb(c *models.Climb) error {
-	session, err := GetCurrentSession(c.UserID, &c.Date)
+	session, err := GetSessionByDate(c.UserID, &c.Date)
 	if err != nil {
 		return err
 	}
@@ -64,51 +63,4 @@ func PrepareClimb(c *models.Climb) error {
 	c.Load = c.CalculateLoad()
 
 	return nil
-}
-
-func GetCurrentSession(userId int, date *time.Time) (*models.Session, error) {
-	var session models.Session
-	var err error
-	var sessionDate time.Time
-
-	// get today's date with time set to 00:00:00
-	// if there is no current session, create new session
-	today := time.Now().UTC().Truncate(24 * time.Hour)
-	if date == nil {
-		sessionDate = today
-	} else {
-		sessionDate = *date
-	}
-
-	// check if today's session already exists for curr user
-	// transaction to avoid race conditions
-	err = database.DB.Transaction(func(tx *gorm.DB) error {
-		err := tx.
-			Where("user_id = ? AND date = ?", userId, sessionDate).
-			Take(&session).
-			Error
-		if err != nil {
-			if err == gorm.ErrRecordNotFound {
-				// if there is no current session, create new session
-				session = models.Session{
-					UserID: userId,
-					Date:   sessionDate,
-				}
-				// create session in transaction
-				if err = tx.Create(&session).Error; err != nil {
-					return err // rollback transaction if error
-				}
-			} else {
-				return err
-			}
-		}
-		// if no errors in transaction
-		return nil
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &session, nil
 }
