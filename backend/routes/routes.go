@@ -2,7 +2,6 @@ package routes
 
 import (
 	"log"
-	"net/http"
 
 	"github.com/Alan-Luc/VertiLog/backend/handlers"
 	"github.com/Alan-Luc/VertiLog/backend/utils/auth"
@@ -33,12 +32,13 @@ func authRoutes(router *gin.RouterGroup) {
 }
 
 func sessionRoutes(router *gin.RouterGroup) {
-	router.GET("/sessions/:id", handlers.GetSession)
+	router.GET("/sessions/:id", handlers.GetSessionByIDHandler)
 }
 
 func climbRoutes(router *gin.RouterGroup) {
-	router.GET("/climbs", func(ctx *gin.Context) {
-		ctx.JSON(http.StatusOK, gin.H{"hello": "world"})
-	})
-	router.POST("/logClimb", handlers.LogClimb)
+	// router.GET("/climbs", func(ctx *gin.Context) {
+	// 	ctx.JSON(http.StatusOK, gin.H{"hello": "world"})
+	// })
+	router.POST("/logClimb", handlers.LogClimbHandler)
+	router.GET("/climbs/:id", handlers.GetClimbByIDHandler)
 }

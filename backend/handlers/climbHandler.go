@@ -3,7 +3,9 @@ package handlers
 import (
 	"html"
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Alan-Luc/VertiLog/backend/database"
 	"github.com/Alan-Luc/VertiLog/backend/models"
@@ -12,7 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func LogClimb(ctx *gin.Context) {
+func LogClimbHandler(ctx *gin.Context) {
 	var climb models.Climb
 	var err error
 
@@ -21,11 +23,11 @@ func LogClimb(ctx *gin.Context) {
 		return
 	}
 
-	userId, err := auth.ExtractUserIdFromJWT(ctx)
+	userID, err := auth.ExtractUserIdFromJWT(ctx)
 	if gContext.HandleReqError(ctx, err, http.StatusUnauthorized) {
 		return
 	}
-	climb.UserID = userId
+	climb.UserID = userID
 
 	err = PrepareClimb(&climb)
 	if gContext.HandleReqError(ctx, err, http.StatusInternalServerError) {
@@ -43,6 +45,32 @@ func LogClimb(ctx *gin.Context) {
 	})
 }
 
+func GetClimbByIDHandler(ctx *gin.Context) {
+	var climb *models.Climb
+	var climbID int
+	var userID int
+	var err error
+
+	climbID, err = strconv.Atoi(ctx.Param("id"))
+	if gContext.HandleReqError(ctx, err, http.StatusBadRequest) {
+		return
+	}
+
+	userID, err = auth.ExtractUserIdFromJWT(ctx)
+	if gContext.HandleReqError(ctx, err, http.StatusUnauthorized) {
+		return
+	}
+
+	climb, err = FindClimbByID(userID, climbID)
+	if gContext.HandleReqError(ctx, err, http.StatusNotFound) {
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"data": climb,
+	})
+}
+
 // helpers
 func CreateClimb(c *models.Climb) error {
 	// create climb for requesting user
@@ -53,7 +81,7 @@ func CreateClimb(c *models.Climb) error {
 }
 
 func PrepareClimb(c *models.Climb) error {
-	session, err := GetSessionByDate(c.UserID, &c.Date)
+	session, err := FindOrCreateSessionByDate(c.UserID, &c.Date)
 	if err != nil {
 		return err
 	}
@@ -63,4 +91,26 @@ func PrepareClimb(c *models.Climb) error {
 	c.Load = c.CalculateLoad()
 
 	return nil
+}
+
+func FindClimbByID(userID, climbId int) (*models.Climb, error) {
+	var climb models.Climb
+	var err error
+
+	err = climb.FindById(database.DB, userID, climbId)
+	if err != nil {
+		return nil, err
+	}
+	return &climb, nil
+}
+
+func FindClimbByDate(userID int, date time.Time) (*models.Climb, error) {
+	var climb models.Climb
+	var err error
+
+	err = climb.FindByDate(database.DB, userID, date)
+	if err != nil {
+		return nil, err
+	}
+	return &climb, nil
 }
