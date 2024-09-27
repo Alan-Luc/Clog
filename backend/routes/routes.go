@@ -33,12 +33,11 @@ func authRoutes(router *gin.RouterGroup) {
 
 func sessionRoutes(router *gin.RouterGroup) {
 	router.GET("/sessions/:id", handlers.GetSessionByIDHandler)
+	router.GET("/sessions", handlers.GetAllSessionsHandler)
 }
 
 func climbRoutes(router *gin.RouterGroup) {
-	// router.GET("/climbs", func(ctx *gin.Context) {
-	// 	ctx.JSON(http.StatusOK, gin.H{"hello": "world"})
-	// })
 	router.POST("/logClimb", handlers.LogClimbHandler)
 	router.GET("/climbs/:id", handlers.GetClimbByIDHandler)
+	// router.GET("/climbs", handlers.GetClimbByIDHandler)
 }

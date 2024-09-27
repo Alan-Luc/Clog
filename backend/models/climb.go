@@ -1,6 +1,7 @@
 package models
 
 import (
+	"log"
 	"time"
 
 	"gorm.io/gorm"
@@ -27,9 +28,27 @@ func (c *Climb) CalculateLoad() float64 {
 }
 
 func (c *Climb) FindById(db *gorm.DB, userId, climbId int) error {
-	return db.Where("user_id = ? AND id = ?", userId, climbId).Take(c).Error
+	err := db.
+		Where("user_id = ? AND id = ?", userId, climbId).
+		Take(c).Error
+
+	if err != nil {
+		log.Printf("Database error: %v", err) // Log the error if query fails
+		return err
+	}
+
+	return nil
 }
 
 func (c *Climb) FindByDate(db *gorm.DB, userId int, climbDate time.Time) error {
-	return db.Where("user_id = ? AND date = ?", userId, climbDate).Take(c).Error
+	err := db.
+		Where("user_id = ? AND date = ?", userId, climbDate).
+		Take(c).Error
+
+	if err != nil {
+		log.Printf("Database error: %v", err) // Log the error if query fails
+		return err
+	}
+
+	return nil
 }
