@@ -27,6 +27,23 @@ func (c *Climb) CalculateLoad() float64 {
 	return load
 }
 
+func (c *Climb) FindAll(db *gorm.DB, userId, offset, limit int) ([]Climb, error) {
+	var climbs []Climb
+
+	err := db.
+		Where("user_id = ?", userId).
+		Offset(offset).
+		Limit(limit).
+		Find(&climbs).Error
+
+	if err != nil {
+		log.Printf("Database error: %v", err) // Log the error if query fails
+		return nil, err
+	}
+
+	return climbs, nil
+}
+
 func (c *Climb) FindById(db *gorm.DB, userId, climbId int) error {
 	err := db.
 		Where("user_id = ? AND id = ?", userId, climbId).

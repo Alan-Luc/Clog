@@ -21,6 +21,7 @@ func (s *Session) FindAll(db *gorm.DB, userID, offset, limit int) ([]Session, er
 
 	// Execute the query and check for errors
 	err := db.
+		Preload("Climbs").
 		Where("user_id = ?", userID).
 		Limit(limit).
 		Offset(offset).

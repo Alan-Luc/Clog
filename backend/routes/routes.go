@@ -39,5 +39,5 @@ func sessionRoutes(router *gin.RouterGroup) {
 func climbRoutes(router *gin.RouterGroup) {
 	router.POST("/logClimb", handlers.LogClimbHandler)
 	router.GET("/climbs/:id", handlers.GetClimbByIDHandler)
-	// router.GET("/climbs", handlers.GetClimbByIDHandler)
+	router.GET("/climbs", handlers.GetAllClimbsHandler)
 }

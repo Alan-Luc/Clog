@@ -51,3 +51,17 @@ func FindClimbByDate(userID int, date time.Time) (*models.Climb, error) {
 	}
 	return &climb, nil
 }
+
+func FindAllClimbsByUserID(userID, page, limit int) (*[]models.Climb, error) {
+	var climb models.Climb
+	var climbs []models.Climb
+	var err error
+
+	offset := (page - 1) * limit
+	climbs, err = climb.FindAll(database.DB, userID, offset, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	return &climbs, nil
+}
