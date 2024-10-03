@@ -8,6 +8,7 @@ import (
 	"github.com/Alan-Luc/VertiLog/backend/services"
 	"github.com/Alan-Luc/VertiLog/backend/utils/auth"
 	"github.com/Alan-Luc/VertiLog/backend/utils/gContext"
+	"github.com/Alan-Luc/VertiLog/backend/utils/params"
 	"github.com/gin-gonic/gin"
 )
 
@@ -68,12 +69,7 @@ func GetAllSessionsHandler(ctx *gin.Context) {
 	pageParam := ctx.DefaultQuery("page", "1")
 	limitParam := ctx.DefaultQuery("limit", "10")
 
-	page, err = strconv.Atoi(pageParam)
-	if gContext.HandleReqError(ctx, err, http.StatusBadRequest) {
-		return
-	}
-
-	limit, err = strconv.Atoi(limitParam)
+	page, limit, err = params.ValidPaginationParams(pageParam, limitParam)
 	if gContext.HandleReqError(ctx, err, http.StatusBadRequest) {
 		return
 	}
@@ -96,3 +92,12 @@ func GetAllSessionsHandler(ctx *gin.Context) {
 		},
 	})
 }
+
+// func GetSessionSummariesByDateHandler(ctx *gin.Context) {
+// 	var sessionSummaries *[]models.SessionSummary
+// 	var userID int
+// 	var startDate time.Time
+// 	var endDate time.Time
+// 	var err error
+//
+// }

@@ -20,6 +20,7 @@ type Climb struct {
 	CreatedAt        time.Time `gorm:"not null"`
 	UpdatedAt        time.Time `gorm:"not null"`
 	Tops             int       `gorm:"default:0"`
+	Notes            string    `                                              json:"notes"`
 }
 
 func (c *Climb) CalculateLoad() float64 {

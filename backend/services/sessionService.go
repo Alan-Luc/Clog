@@ -9,18 +9,17 @@ import (
 )
 
 func FindAllSessionsByUserID(userID, page, limit int) (*[]models.Session, error) {
-	var session models.Session
-	var sessions []models.Session
+	var sessions *[]models.Session
 	var err error
 
 	// TODO: cache page limit
 
 	offset := (page - 1) * limit
-	sessions, err = session.FindAll(database.DB, userID, offset, limit)
+	sessions, err = models.FindAllSessions(database.DB, userID, offset, limit)
 	if err != nil {
 		return nil, err
 	}
-	return &sessions, nil
+	return sessions, nil
 }
 
 func FindSessionByID(userID, sessionID, page, limit int) (*models.Session, error) {
@@ -79,4 +78,18 @@ func FindOrCreateSessionByDate(userID int, date *time.Time) (*models.Session, er
 		return nil, err
 	}
 	return &session, nil
+}
+
+func FindSessionsSummariesByDate(
+	userID int,
+	startDate, endDate time.Time,
+) (*[]models.SessionSummary, error) {
+	var sessionSummaries *[]models.SessionSummary
+	var err error
+
+	sessionSummaries, err = models.FindSessionSummaries(database.DB, userID, startDate, endDate)
+	if err != nil {
+		return nil, err
+	}
+	return sessionSummaries, nil
 }

@@ -14,9 +14,16 @@ type Session struct {
 	UpdatedAt time.Time `gorm:"not null"`
 	UserID    int       `gorm:"not null;index"`
 	Climbs    []Climb   `gorm:"foreignKey:SessionID"` // not a column, is a relationship
+	Notes     string    `                                               json:"notes"`
 }
 
-func (s *Session) FindAll(db *gorm.DB, userID, offset, limit int) ([]Session, error) {
+type SessionSummary struct {
+	ID   int       `gorm:"primaryKey"`
+	Date time.Time `gorm:"not null;index" binding:"required"`
+	Load float64
+}
+
+func FindAllSessions(db *gorm.DB, userID, offset, limit int) (*[]Session, error) {
 	var sessions []Session
 
 	// Execute the query and check for errors
@@ -33,7 +40,7 @@ func (s *Session) FindAll(db *gorm.DB, userID, offset, limit int) ([]Session, er
 		return nil, err
 	}
 
-	return sessions, nil
+	return &sessions, nil
 }
 
 func (s *Session) FindById(db *gorm.DB, userID, sessionID, offset, limit int) error {
@@ -67,4 +74,27 @@ func (s *Session) FindByDate(db *gorm.DB, userId int, sessionDate time.Time) err
 	}
 
 	return nil
+}
+
+// session summaries
+func FindSessionSummaries(
+	db *gorm.DB,
+	userID int,
+	startDate, endDate time.Time,
+) (*[]SessionSummary, error) {
+	var summaries []SessionSummary
+
+	err := db.Table("sessions").
+		Select("sessions.id, sessions.date, SUM(climbs.load) as load").
+		Joins("JOIN climbs on climbs.session_id = sessions.id").
+		Where("sessions.user_id = ? AND sessions.date BETWEEN ? AND ?", userID, startDate, endDate).
+		Group("session.id").
+		Scan(&summaries).Error
+
+	if err != nil {
+		log.Printf("Database error: %v", err) // Log the error if query fails
+		return nil, err
+	}
+
+	return &summaries, nil
 }
