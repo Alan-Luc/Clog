@@ -69,7 +69,7 @@ func GetAllSessionsHandler(ctx *gin.Context) {
 	pageParam := ctx.DefaultQuery("page", "1")
 	limitParam := ctx.DefaultQuery("limit", "10")
 
-	page, limit, err = params.ValidPaginationParams(pageParam, limitParam)
+	page, limit, err = params.ValidatePaginationParams(pageParam, limitParam)
 	if gContext.HandleReqError(ctx, err, http.StatusBadRequest) {
 		return
 	}

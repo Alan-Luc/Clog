@@ -2,12 +2,11 @@ package main
 
 import (
 	"log"
-	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/Alan-Luc/VertiLog/backend/database"
 	"github.com/Alan-Luc/VertiLog/backend/routes"
+	"github.com/Alan-Luc/VertiLog/backend/utils/logger"
+	"github.com/Alan-Luc/VertiLog/backend/utils/server"
 	"github.com/joho/godotenv"
 )
 
@@ -16,22 +15,17 @@ func init() {
 	if err != nil {
 		log.Fatal("error loading .env file")
 	}
+	// connect db
 	database.ConnectDB()
+	// initialize logging
+	logger.InitLogger()
 }
 
 func main() {
-	// defer close
-	defer database.CloseDB()
-
+	defer database.CloseDB()   // defer db close
+	defer logger.Logger.Sync() // flush logger
 	// router setup
-	go routes.SetupRouter()
+	srv := routes.StartServer()
 
-	// Stop channel
-	sc := make(chan os.Signal, 1)
-	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
-
-	// block until signal
-	<-sc
-	log.Println("Gracefully shutting down...")
-
+	server.GracefulShutdown(srv, logger.Logger)
 }

@@ -1,14 +1,16 @@
 package routes
 
 import (
-	"log"
+	"net/http"
 
 	"github.com/Alan-Luc/VertiLog/backend/handlers"
 	"github.com/Alan-Luc/VertiLog/backend/utils/auth"
+	"github.com/Alan-Luc/VertiLog/backend/utils/logger"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
-func SetupRouter() {
+func SetupRouter() *gin.Engine {
 	router := gin.Default()
 
 	// public routes
@@ -20,9 +22,24 @@ func SetupRouter() {
 	sessionRoutes(protected)
 	climbRoutes(protected)
 
-	if err := router.Run(":8080"); err != nil {
-		log.Fatal("Failed to start server:", err)
+	return router
+}
+
+func StartServer() *http.Server {
+	router := SetupRouter()
+
+	server := &http.Server{
+		Addr:    ":8080",
+		Handler: router,
 	}
+
+	go func() {
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.Logger.Error("Failed to start server:", zap.Error(err))
+		}
+	}()
+
+	return server
 }
 
 // Route grouping
