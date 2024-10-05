@@ -31,7 +31,7 @@ func ValidatePaginationParams(page, limit string) (p, l int, e error) {
 	return p, l, nil
 }
 
-func ValidateDateParams(dateStr string) (time.Time, error) {
+func ValidateAndParseDateParams(dateStr string) (time.Time, error) {
 	var err error
 	var parsedDate time.Time
 
@@ -45,4 +45,38 @@ func ValidateDateParams(dateStr string) (time.Time, error) {
 	truncatedDate := parsedDate.Truncate(24 * time.Hour)
 
 	return truncatedDate, nil
+}
+
+func ValidateAndParseDateSpanParams(startDateStr, endDateStr string) (time.Time, time.Time, error) {
+	var err error
+	var parsedStartDate time.Time
+	var parsedEndDate time.Time
+
+	layout := "2006-01-02"
+
+	parsedStartDate, err = time.Parse(layout, startDateStr)
+	if err != nil {
+		return time.Time{}, time.Time{}, fmt.Errorf(
+			"Invalid date format, expected YYYY-MM-DD! %v",
+			err,
+		)
+	}
+
+	parsedEndDate, err = time.Parse(layout, endDateStr)
+	if err != nil {
+		return time.Time{}, time.Time{}, fmt.Errorf(
+			"Invalid date format, expected YYYY-MM-DD! %v",
+			err,
+		)
+	}
+
+	startDate := parsedStartDate.Truncate(24 * time.Hour)
+	endDate := parsedEndDate.Truncate(24 * time.Hour)
+
+	if endDate.Before(startDate) || startDate.Equal(endDate) {
+		err = errors.New("Start date must be at an earlier time than end date!")
+		return time.Time{}, time.Time{}, err
+	}
+
+	return startDate, endDate, nil
 }

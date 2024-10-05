@@ -88,7 +88,7 @@ func FindSessionSummaries(
 		Select("sessions.id, sessions.date, SUM(climbs.load) as load").
 		Joins("JOIN climbs on climbs.session_id = sessions.id").
 		Where("sessions.user_id = ? AND sessions.date BETWEEN ? AND ?", userID, startDate, endDate).
-		Group("session.id").
+		Group("sessions.id").
 		Scan(&summaries).Error
 
 	if err != nil {

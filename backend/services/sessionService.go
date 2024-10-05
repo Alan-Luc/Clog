@@ -1,12 +1,10 @@
 package services
 
 import (
-	"errors"
 	"time"
 
 	"github.com/Alan-Luc/VertiLog/backend/database"
 	"github.com/Alan-Luc/VertiLog/backend/models"
-	"github.com/Alan-Luc/VertiLog/backend/utils/params"
 	"gorm.io/gorm"
 )
 
@@ -84,26 +82,10 @@ func FindOrCreateSessionByDate(userID int, date *time.Time) (*models.Session, er
 
 func FindSessionsSummariesByDate(
 	userID int,
-	startDateStr, endDateStr string,
+	startDate, endDate time.Time,
 ) (*[]models.SessionSummary, error) {
 	var sessionSummaries *[]models.SessionSummary
-	var startDate time.Time
-	var endDate time.Time
 	var err error
-
-	startDate, err = params.ValidateDateParams(startDateStr)
-	if err != nil {
-		return nil, err
-	}
-
-	endDate, err = params.ValidateDateParams(endDateStr)
-	if err != nil {
-		return nil, err
-	}
-
-	if endDate.Before(startDate) || startDate.Equal(endDate) {
-		return nil, errors.New("Start date must be at an earlier time than end date!")
-	}
 
 	sessionSummaries, err = models.FindSessionSummaries(database.DB, userID, startDate, endDate)
 	if err != nil {

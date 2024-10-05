@@ -1,9 +1,9 @@
 package gContext
 
 import (
-	"log"
-
+	"github.com/Alan-Luc/VertiLog/backend/utils/logger"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 func HandleReqError(ctx *gin.Context, err error, statusCode int) bool {
@@ -15,15 +15,15 @@ func HandleReqError(ctx *gin.Context, err error, statusCode int) bool {
 		queryParams := ctx.Request.URL.RawQuery
 
 		// Log the error with additional request context
-		log.Printf(
-			"An error occurred: %v | Status Code: %d | Method: %s | Path: %s | Client IP: %s | User-Agent: %s | Query: %s",
-			err,
-			statusCode,
-			method,
-			path,
-			clientIP,
-			userAgent,
-			queryParams,
+		logger.Logger.Info(
+			"An error occured:",
+			zap.Error(err),
+			zap.Int("status_code", statusCode),
+			zap.String("method", method),
+			zap.String("path", path),
+			zap.String("client_ip", clientIP),
+			zap.String("user_agent", userAgent),
+			zap.String("query_params", queryParams),
 		)
 
 		ctx.JSON(statusCode, gin.H{"error": err.Error()})

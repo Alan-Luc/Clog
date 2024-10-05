@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/Alan-Luc/VertiLog/backend/models"
 	"github.com/Alan-Luc/VertiLog/backend/services"
@@ -93,11 +94,37 @@ func GetAllSessionsHandler(ctx *gin.Context) {
 	})
 }
 
-// func GetSessionSummariesByDateHandler(ctx *gin.Context) {
-// 	var sessionSummaries *[]models.SessionSummary
-// 	var userID int
-// 	var startDate time.Time
-// 	var endDate time.Time
-// 	var err error
-//
-// }
+func GetSessionSummariesByDateHandler(ctx *gin.Context) {
+	var sessionSummaries *[]models.SessionSummary
+	var userID int
+	var startDate time.Time
+	var endDate time.Time
+	var err error
+
+	startDateStr := ctx.Query("startDate")
+	endDateStr := ctx.Query("endDate")
+
+	startDate, endDate, err = params.ValidateAndParseDateSpanParams(startDateStr, endDateStr)
+	if gContext.HandleReqError(ctx, err, http.StatusBadRequest) {
+		return
+	}
+
+	userID, err = auth.ExtractUserIdFromJWT(ctx)
+	if gContext.HandleReqError(ctx, err, http.StatusUnauthorized) {
+		return
+	}
+
+	sessionSummaries, err = services.FindSessionsSummariesByDate(userID, startDate, endDate)
+	if gContext.HandleReqError(ctx, err, http.StatusNotFound) {
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"data": sessionSummaries,
+		"metadata": map[string]any{
+			"count":     len(*sessionSummaries),
+			"startDate": startDate,
+			"endDate":   endDate,
+		},
+	})
+}
