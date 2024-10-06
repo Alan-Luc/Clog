@@ -1,12 +1,11 @@
 package routes
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/Alan-Luc/VertiLog/backend/utils/auth"
-	"github.com/Alan-Luc/VertiLog/backend/utils/logger"
 	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 )
 
 func SetupRouter() *gin.Engine {
@@ -34,7 +33,7 @@ func StartServer() *http.Server {
 
 	go func() {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Logger.Error("Failed to start server:", zap.Error(err))
+			log.Printf("Failed to start server: %+v", err)
 		}
 	}()
 

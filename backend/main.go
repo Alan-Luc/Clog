@@ -5,7 +5,6 @@ import (
 
 	"github.com/Alan-Luc/VertiLog/backend/database"
 	"github.com/Alan-Luc/VertiLog/backend/routes"
-	"github.com/Alan-Luc/VertiLog/backend/utils/logger"
 	"github.com/Alan-Luc/VertiLog/backend/utils/server"
 	"github.com/joho/godotenv"
 )
@@ -17,15 +16,12 @@ func init() {
 	}
 	// connect db
 	database.ConnectDB()
-	// initialize logging
-	logger.InitLogger()
 }
 
 func main() {
-	defer database.CloseDB()   // defer db close
-	defer logger.Logger.Sync() // flush logger
+	defer database.CloseDB() // defer db close
 	// router setup
 	srv := routes.StartServer()
 
-	server.GracefulShutdown(srv, logger.Logger)
+	server.GracefulShutdown(srv)
 }
