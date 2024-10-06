@@ -11,25 +11,33 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/pkg/errors"
 )
 
+// const TOKEN_TTL_HRS = "hi"
+
 func GenerateJWT(userId int) (string, error) {
-	token_ttl, err := strconv.Atoi(os.Getenv("TOKEN_TTL_HRS"))
+	ttlStr := os.Getenv("TOKEN_TTL_HRS")
+	if ttlStr == "" {
+		return "", errors.New("TOKEN_TTL_HRS environment variable is missing")
+	}
+
+	ttl, err := strconv.Atoi(ttlStr)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "Failed to convert TOKEN_TTL_HRS to int")
 	}
 
 	// generate JWT claims
 	claims := jwt.MapClaims{}
 	claims["authorized"] = true
 	claims["userId"] = userId
-	claims["exp"] = time.Now().Add(time.Hour * time.Duration(token_ttl)).Unix()
+	claims["exp"] = time.Now().Add(time.Hour * time.Duration(ttl)).Unix()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	// sign the JWT
 	tokenString, err := token.SignedString([]byte(os.Getenv("API_SECRET")))
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "Failed to sign JWT")
 	}
 
 	return tokenString, nil
@@ -43,7 +51,7 @@ func ValidateJWT(ctx *gin.Context) error {
 	// to the callback, providing flexibility.
 	_, err := jwt.Parse(tokenString, ParseJWT)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "Failed to parse the JWT")
 	}
 
 	return nil
@@ -52,7 +60,8 @@ func ValidateJWT(ctx *gin.Context) error {
 func ParseJWT(t *jwt.Token) (interface{}, error) {
 	// validate the alg
 	if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-		return nil, fmt.Errorf("Unexpected signing method: %v", t.Header["alg"])
+		err := fmt.Errorf("Unexpected signing method: %v", t.Header["alg"])
+		return nil, errors.Wrap(err, "Error occurred when parsing JWT")
 	}
 
 	// return api secret
@@ -74,7 +83,7 @@ func ExtractUserIdFromJWT(ctx *gin.Context) (int, error) {
 	tokenString := ExtractJWT(ctx)
 	t, err := jwt.Parse(tokenString, ParseJWT)
 	if err != nil {
-		return 0, err
+		return 0, errors.Wrap(err, "Error occurred when parsing JWT")
 	}
 
 	claims, ok := t.Claims.(jwt.MapClaims)

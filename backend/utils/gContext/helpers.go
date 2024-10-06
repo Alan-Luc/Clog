@@ -1,12 +1,13 @@
 package gContext
 
 import (
-	"github.com/Alan-Luc/VertiLog/backend/utils/logger"
+	"fmt"
+	"log"
+
 	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 )
 
-func HandleReqError(ctx *gin.Context, err error, statusCode int) bool {
+func HandleAPIError(ctx *gin.Context, errMsg string, err error, statusCode int) bool {
 	if err != nil {
 		method := ctx.Request.Method
 		path := ctx.Request.URL.Path
@@ -14,19 +15,25 @@ func HandleReqError(ctx *gin.Context, err error, statusCode int) bool {
 		userAgent := ctx.Request.UserAgent()
 		queryParams := ctx.Request.URL.RawQuery
 
-		// Log the error with additional request context
-		logger.Logger.Info(
-			"An error occured:",
-			zap.Error(err),
-			zap.Int("status_code", statusCode),
-			zap.String("method", method),
-			zap.String("path", path),
-			zap.String("client_ip", clientIP),
-			zap.String("user_agent", userAgent),
-			zap.String("query_params", queryParams),
-		)
+		errCode := fmt.Sprintf("status_code %d", statusCode)
+		errMethod := fmt.Sprintf("method %s", method)
+		errPath := fmt.Sprintf("path %s", path)
+		errIP := fmt.Sprintf("client_ip %s", clientIP)
+		errUserAgent := fmt.Sprintf("user_agent %s", userAgent)
+		errQueryParams := fmt.Sprintf("query_params %s", queryParams)
 
-		ctx.JSON(statusCode, gin.H{"error": err.Error()})
+		log.Printf(
+			"An error has occurred: |%s| |%s| |%s| |%s| |%s| |%s|\n",
+			errCode,
+			errMethod,
+			errPath,
+			errIP,
+			errUserAgent,
+			errQueryParams,
+		)
+		log.Printf("Stack Trace: \n%+v\n", err)
+
+		ctx.JSON(statusCode, gin.H{"error": errMsg})
 		return true
 	}
 	return false

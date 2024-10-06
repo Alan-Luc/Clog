@@ -7,8 +7,8 @@ import (
 
 // Route grouping
 func authRoutes(router *gin.RouterGroup) {
-	router.POST("/register", handlers.RegisterUser)
-	router.POST("/login", handlers.LoginUser)
+	router.POST("/register", handlers.RegisterUserHandler)
+	router.POST("/login", handlers.LoginUserHandler)
 }
 
 func sessionRoutes(router *gin.RouterGroup) {

@@ -25,28 +25,43 @@ func GetSessionByIDHandler(ctx *gin.Context) {
 	pageParam := ctx.DefaultQuery("page", "1")
 	limitParam := ctx.DefaultQuery("limit", "10")
 
-	page, err = strconv.Atoi(pageParam)
-	if gContext.HandleReqError(ctx, err, http.StatusBadRequest) {
-		return
-	}
-
-	limit, err = strconv.Atoi(limitParam)
-	if gContext.HandleReqError(ctx, err, http.StatusBadRequest) {
+	page, limit, err = params.ValidatePaginationParams(pageParam, limitParam)
+	if gContext.HandleAPIError(
+		ctx,
+		"Invalid pagination parameters. Please provide valid numeric values for page and limit.",
+		err,
+		http.StatusBadRequest,
+	) {
 		return
 	}
 
 	sessionID, err = strconv.Atoi(ctx.Param("id"))
-	if gContext.HandleReqError(ctx, err, http.StatusBadRequest) {
+	if gContext.HandleAPIError(
+		ctx,
+		"Invalid session ID. Please ensure the session ID is a valid number.",
+		err,
+		http.StatusBadRequest,
+	) {
 		return
 	}
 
 	userID, err = auth.ExtractUserIdFromJWT(ctx)
-	if gContext.HandleReqError(ctx, err, http.StatusUnauthorized) {
+	if gContext.HandleAPIError(
+		ctx,
+		"Authorization token is invalid or missing. Please log in and try again.",
+		err,
+		http.StatusUnauthorized,
+	) {
 		return
 	}
 
 	session, err = services.FindSessionByID(userID, sessionID, page, limit)
-	if gContext.HandleReqError(ctx, err, http.StatusNotFound) {
+	if gContext.HandleAPIError(
+		ctx,
+		"Session not found. Please check the session ID and try again.",
+		err,
+		http.StatusNotFound,
+	) {
 		return
 	}
 
@@ -71,17 +86,32 @@ func GetAllSessionsHandler(ctx *gin.Context) {
 	limitParam := ctx.DefaultQuery("limit", "10")
 
 	page, limit, err = params.ValidatePaginationParams(pageParam, limitParam)
-	if gContext.HandleReqError(ctx, err, http.StatusBadRequest) {
+	if gContext.HandleAPIError(
+		ctx,
+		"Invalid pagination parameters. Please provide valid numeric values for page and limit.",
+		err,
+		http.StatusBadRequest,
+	) {
 		return
 	}
 
 	userID, err = auth.ExtractUserIdFromJWT(ctx)
-	if gContext.HandleReqError(ctx, err, http.StatusUnauthorized) {
+	if gContext.HandleAPIError(
+		ctx,
+		"Authorization token is invalid or missing. Please log in and try again.",
+		err,
+		http.StatusUnauthorized,
+	) {
 		return
 	}
 
 	sessions, err = services.FindAllSessionsByUserID(userID, page, limit)
-	if gContext.HandleReqError(ctx, err, http.StatusNotFound) {
+	if gContext.HandleAPIError(
+		ctx,
+		"No sessions found. Please try again later.",
+		err,
+		http.StatusNotFound,
+	) {
 		return
 	}
 
@@ -105,17 +135,32 @@ func GetSessionSummariesByDateHandler(ctx *gin.Context) {
 	endDateStr := ctx.Query("endDate")
 
 	startDate, endDate, err = params.ValidateAndParseDateSpanParams(startDateStr, endDateStr)
-	if gContext.HandleReqError(ctx, err, http.StatusBadRequest) {
+	if gContext.HandleAPIError(
+		ctx,
+		"Invalid date range. Please ensure that the start date and end date are valid.",
+		err,
+		http.StatusBadRequest,
+	) {
 		return
 	}
 
 	userID, err = auth.ExtractUserIdFromJWT(ctx)
-	if gContext.HandleReqError(ctx, err, http.StatusUnauthorized) {
+	if gContext.HandleAPIError(
+		ctx,
+		"Authorization token is invalid or missing. Please log in and try again.",
+		err,
+		http.StatusUnauthorized,
+	) {
 		return
 	}
 
 	sessionSummaries, err = services.FindSessionsSummariesByDate(userID, startDate, endDate)
-	if gContext.HandleReqError(ctx, err, http.StatusNotFound) {
+	if gContext.HandleAPIError(
+		ctx,
+		"No session summaries found for the given date range.",
+		err,
+		http.StatusNotFound,
+	) {
 		return
 	}
 
