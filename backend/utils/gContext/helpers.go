@@ -31,7 +31,8 @@ func HandleAPIError(ctx *gin.Context, errMsg string, err error, statusCode int) 
 			errUserAgent,
 			errQueryParams,
 		)
-		log.Printf("Stack Trace: \n%+v\n", err)
+		log.Printf("Error details: %v\n", err)
+		log.Printf("Stack trace: \n %+v", err)
 
 		ctx.JSON(statusCode, gin.H{"error": errMsg})
 		return true
