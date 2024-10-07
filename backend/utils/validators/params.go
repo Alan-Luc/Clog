@@ -1,10 +1,10 @@
-package params
+package validators
 
 import (
-	"errors"
-	"fmt"
 	"strconv"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 func ValidatePaginationParams(page, limit string) (p, l int, e error) {
@@ -12,12 +12,12 @@ func ValidatePaginationParams(page, limit string) (p, l int, e error) {
 
 	p, err = strconv.Atoi(page)
 	if err != nil {
-		return 0, 0, errors.New("Invalid page parameter!")
+		return 0, 0, errors.Wrap(err, "Invalid page parameter!")
 	}
 
 	l, err = strconv.Atoi(limit)
 	if err != nil {
-		return 0, 0, errors.New("Invalid page parameter!")
+		return 0, 0, errors.Wrap(err, "Invalid page parameter!")
 	}
 
 	if p < 1 {
@@ -39,7 +39,7 @@ func ValidateAndParseDateParams(dateStr string) (time.Time, error) {
 
 	parsedDate, err = time.Parse(layout, dateStr)
 	if err != nil {
-		return time.Time{}, fmt.Errorf("Invalid date format, expected YYYY-MM-DD! %v", err)
+		return time.Time{}, errors.Wrap(err, "Invalid date format, expected YYYY-MM-DD! %v")
 	}
 
 	truncatedDate := parsedDate.Truncate(24 * time.Hour)
@@ -56,17 +56,17 @@ func ValidateAndParseDateSpanParams(startDateStr, endDateStr string) (time.Time,
 
 	parsedStartDate, err = time.Parse(layout, startDateStr)
 	if err != nil {
-		return time.Time{}, time.Time{}, fmt.Errorf(
-			"Invalid date format, expected YYYY-MM-DD! %v",
+		return time.Time{}, time.Time{}, errors.Wrap(
 			err,
+			"Invalid date format, expected YYYY-MM-DD! %v",
 		)
 	}
 
 	parsedEndDate, err = time.Parse(layout, endDateStr)
 	if err != nil {
-		return time.Time{}, time.Time{}, fmt.Errorf(
-			"Invalid date format, expected YYYY-MM-DD! %v",
+		return time.Time{}, time.Time{}, errors.Wrap(
 			err,
+			"Invalid date format, expected YYYY-MM-DD! %v",
 		)
 	}
 
@@ -74,8 +74,9 @@ func ValidateAndParseDateSpanParams(startDateStr, endDateStr string) (time.Time,
 	endDate := parsedEndDate.Truncate(24 * time.Hour)
 
 	if endDate.Before(startDate) || startDate.Equal(endDate) {
-		err = errors.New("Start date must be at an earlier time than end date!")
-		return time.Time{}, time.Time{}, err
+		return time.Time{}, time.Time{}, errors.New(
+			"Start date must be at an earlier time than end date!",
+		)
 	}
 
 	return startDate, endDate, nil

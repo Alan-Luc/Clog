@@ -6,9 +6,9 @@ import (
 
 	"github.com/Alan-Luc/VertiLog/backend/models"
 	"github.com/Alan-Luc/VertiLog/backend/services"
+	"github.com/Alan-Luc/VertiLog/backend/utils/apiErrors"
 	"github.com/Alan-Luc/VertiLog/backend/utils/auth"
-	"github.com/Alan-Luc/VertiLog/backend/utils/gContext"
-	"github.com/Alan-Luc/VertiLog/backend/utils/params"
+	"github.com/Alan-Luc/VertiLog/backend/utils/validators"
 	"github.com/gin-gonic/gin"
 )
 
@@ -18,7 +18,7 @@ func LogClimbHandler(ctx *gin.Context) {
 	var err error
 
 	err = ctx.ShouldBindJSON(&climb)
-	if gContext.HandleAPIError(
+	if apiErrors.HandleAPIError(
 		ctx,
 		"Invalid input. Please check the submitted data and try again.",
 		err,
@@ -28,7 +28,7 @@ func LogClimbHandler(ctx *gin.Context) {
 	}
 
 	userID, err = auth.ExtractUserIdFromJWT(ctx)
-	if gContext.HandleAPIError(
+	if apiErrors.HandleAPIError(
 		ctx,
 		"Authorization token is invalid or missing. Please log in and try again.",
 		err,
@@ -39,7 +39,7 @@ func LogClimbHandler(ctx *gin.Context) {
 	climb.UserID = userID
 
 	err = services.PrepareClimb(&climb)
-	if gContext.HandleAPIError(
+	if apiErrors.HandleAPIError(
 		ctx,
 		"An error occurred while processing your request. Please try again later.",
 		err,
@@ -49,7 +49,7 @@ func LogClimbHandler(ctx *gin.Context) {
 	}
 
 	err = services.CreateClimb(&climb)
-	if gContext.HandleAPIError(
+	if apiErrors.HandleAPIError(
 		ctx,
 		"An error occurred while logging the climb. Please try again later.",
 		err,
@@ -71,7 +71,7 @@ func GetClimbByIDHandler(ctx *gin.Context) {
 	var err error
 
 	climbID, err = strconv.Atoi(ctx.Param("id"))
-	if gContext.HandleAPIError(
+	if apiErrors.HandleAPIError(
 		ctx,
 		"Invalid climb ID. Please ensure the climb ID is a valid number.",
 		err,
@@ -81,7 +81,7 @@ func GetClimbByIDHandler(ctx *gin.Context) {
 	}
 
 	userID, err = auth.ExtractUserIdFromJWT(ctx)
-	if gContext.HandleAPIError(
+	if apiErrors.HandleAPIError(
 		ctx,
 		"Authorization token is invalid or missing. Please log in and try again.",
 		err,
@@ -91,7 +91,7 @@ func GetClimbByIDHandler(ctx *gin.Context) {
 	}
 
 	climb, err = services.FindClimbByID(userID, climbID)
-	if gContext.HandleAPIError(
+	if apiErrors.HandleAPIError(
 		ctx,
 		"Climb not found. Please check the climb ID and try again.",
 		err,
@@ -115,8 +115,8 @@ func GetAllClimbsHandler(ctx *gin.Context) {
 	pageParam := ctx.DefaultQuery("page", "1")
 	limitParam := ctx.DefaultQuery("limit", "10")
 
-	page, limit, err = params.ValidatePaginationParams(pageParam, limitParam)
-	if gContext.HandleAPIError(
+	page, limit, err = validators.ValidatePaginationParams(pageParam, limitParam)
+	if apiErrors.HandleAPIError(
 		ctx,
 		"Invalid pagination parameters. Please provide valid numeric values for page and limit.",
 		err,
@@ -126,7 +126,7 @@ func GetAllClimbsHandler(ctx *gin.Context) {
 	}
 
 	userID, err = auth.ExtractUserIdFromJWT(ctx)
-	if gContext.HandleAPIError(
+	if apiErrors.HandleAPIError(
 		ctx,
 		"Authorization token is invalid or missing. Please log in and try again.",
 		err,
@@ -136,7 +136,7 @@ func GetAllClimbsHandler(ctx *gin.Context) {
 	}
 
 	climbs, err = services.FindAllClimbsByUserID(userID, page, limit)
-	if gContext.HandleAPIError(
+	if apiErrors.HandleAPIError(
 		ctx,
 		"No climbs found. Please try again later.",
 		err,

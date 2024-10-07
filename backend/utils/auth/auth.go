@@ -14,10 +14,11 @@ import (
 	"github.com/pkg/errors"
 )
 
-// const TOKEN_TTL_HRS = "hi"
+const TOKEN_TTL_HRS = "1"
 
 func GenerateJWT(userId int) (string, error) {
-	ttlStr := os.Getenv("TOKEN_TTL_HRS")
+	// ttlStr := os.Getenv("TOKEN_TTL_HRS")
+	ttlStr := TOKEN_TTL_HRS
 	if ttlStr == "" {
 		return "", errors.New("TOKEN_TTL_HRS environment variable is missing")
 	}

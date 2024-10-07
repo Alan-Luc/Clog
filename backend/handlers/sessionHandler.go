@@ -9,7 +9,7 @@ import (
 	"github.com/Alan-Luc/VertiLog/backend/services"
 	"github.com/Alan-Luc/VertiLog/backend/utils/auth"
 	"github.com/Alan-Luc/VertiLog/backend/utils/gContext"
-	"github.com/Alan-Luc/VertiLog/backend/utils/params"
+	"github.com/Alan-Luc/VertiLog/backend/utils/validators"
 	"github.com/gin-gonic/gin"
 )
 
@@ -21,11 +21,11 @@ func GetSessionByIDHandler(ctx *gin.Context) {
 	var limit int
 	var err error
 
-	// pagination params
+	// pagination validators
 	pageParam := ctx.DefaultQuery("page", "1")
 	limitParam := ctx.DefaultQuery("limit", "10")
 
-	page, limit, err = params.ValidatePaginationParams(pageParam, limitParam)
+	page, limit, err = validators.ValidatePaginationParams(pageParam, limitParam)
 	if gContext.HandleAPIError(
 		ctx,
 		"Invalid pagination parameters. Please provide valid numeric values for page and limit.",
@@ -81,11 +81,11 @@ func GetAllSessionsHandler(ctx *gin.Context) {
 	var limit int
 	var err error
 
-	// pagination params
+	// pagination validators
 	pageParam := ctx.DefaultQuery("page", "1")
 	limitParam := ctx.DefaultQuery("limit", "10")
 
-	page, limit, err = params.ValidatePaginationParams(pageParam, limitParam)
+	page, limit, err = validators.ValidatePaginationParams(pageParam, limitParam)
 	if gContext.HandleAPIError(
 		ctx,
 		"Invalid pagination parameters. Please provide valid numeric values for page and limit.",
@@ -134,7 +134,7 @@ func GetSessionSummariesByDateHandler(ctx *gin.Context) {
 	startDateStr := ctx.Query("startDate")
 	endDateStr := ctx.Query("endDate")
 
-	startDate, endDate, err = params.ValidateAndParseDateSpanParams(startDateStr, endDateStr)
+	startDate, endDate, err = validators.ValidateAndParseDateSpanParams(startDateStr, endDateStr)
 	if gContext.HandleAPIError(
 		ctx,
 		"Invalid date range. Please ensure that the start date and end date are valid.",

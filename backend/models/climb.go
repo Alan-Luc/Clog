@@ -1,9 +1,11 @@
 package models
 
 import (
+	"fmt"
 	"log"
 	"time"
 
+	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
 
@@ -28,44 +30,53 @@ func (c *Climb) CalculateLoad() float64 {
 	return load
 }
 
-func (c *Climb) FindAll(db *gorm.DB, userId, offset, limit int) ([]Climb, error) {
+func (c *Climb) FindAll(db *gorm.DB, userID, offset, limit int) ([]Climb, error) {
 	var climbs []Climb
 
 	err := db.
-		Where("user_id = ?", userId).
+		Where("user_id = ?", userID).
 		Offset(offset).
 		Limit(limit).
 		Find(&climbs).Error
 
 	if err != nil {
 		log.Printf("Database error: %v", err) // Log the error if query fails
-		return nil, err
+		return nil, errors.Wrap(
+			err,
+			fmt.Sprintf("Error finding climbs for user with id %d", userID),
+		)
 	}
 
 	return climbs, nil
 }
 
-func (c *Climb) FindById(db *gorm.DB, userId, climbId int) error {
+func (c *Climb) FindById(db *gorm.DB, userID, climbID int) error {
 	err := db.
-		Where("user_id = ? AND id = ?", userId, climbId).
+		Where("user_id = ? AND id = ?", userID, climbID).
 		Take(c).Error
 
 	if err != nil {
 		log.Printf("Database error: %v", err) // Log the error if query fails
-		return err
+		return errors.Wrap(
+			err,
+			fmt.Sprintf("Error finding climb with id %d for user with id %d", climbID, userID),
+		)
 	}
 
 	return nil
 }
 
-func (c *Climb) FindByDate(db *gorm.DB, userId int, climbDate time.Time) error {
+func (c *Climb) FindByDate(db *gorm.DB, userID int, climbDate time.Time) error {
 	err := db.
-		Where("user_id = ? AND date = ?", userId, climbDate).
+		Where("user_id = ? AND date = ?", userID, climbDate).
 		Take(c).Error
 
 	if err != nil {
 		log.Printf("Database error: %v", err) // Log the error if query fails
-		return err
+		return errors.Wrap(
+			err,
+			fmt.Sprintf("Error finding climb on date %s for user with id %d", climbDate, userID),
+		)
 	}
 
 	return nil

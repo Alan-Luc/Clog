@@ -1,4 +1,4 @@
-package gContext
+package apiErrors
 
 import (
 	"fmt"

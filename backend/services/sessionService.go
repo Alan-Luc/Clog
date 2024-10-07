@@ -1,12 +1,27 @@
 package services
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/Alan-Luc/VertiLog/backend/database"
 	"github.com/Alan-Luc/VertiLog/backend/models"
+	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
+
+func CreateSession(s *models.Session) error {
+	if err := database.DB.Create(&s).Error; err != nil {
+		if err.Error() == gorm.ErrDuplicatedKey.Error() {
+			return errors.Wrap(
+				err,
+				"Failed to create session: a session with the same ID already exists",
+			)
+		}
+		return errors.Wrap(err, "Failed to create sesion")
+	}
+	return nil
+}
 
 func FindAllSessionsByUserID(userID, page, limit int) (*[]models.Session, error) {
 	var sessions *[]models.Session
@@ -31,7 +46,10 @@ func FindSessionByID(userID, sessionID, page, limit int) (*models.Session, error
 	offset := (page - 1) * limit
 	err = session.FindById(database.DB, userID, sessionID, offset, limit)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(
+			err,
+			"Error occurred when finding session",
+		)
 	}
 	return &session, nil
 }
@@ -64,10 +82,16 @@ func FindOrCreateSessionByDate(userID int, date *time.Time) (*models.Session, er
 				// create session in transaction
 				err = tx.Create(&session).Error
 				if err != nil {
-					return err // rollback transaction if error
+					return errors.Wrap(
+						err,
+						fmt.Sprintf("Could not create session for user on date %s", sessionDate),
+					) // rollback transaction if error
 				}
 			} else {
-				return err
+				return errors.Wrap(
+					err,
+					fmt.Sprintf("Could not find session for user on date %s", sessionDate),
+				) // rollback transaction if error
 			}
 		}
 		// if no errors in transaction
