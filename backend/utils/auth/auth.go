@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Alan-Luc/VertiLog/backend/utils/apiErrors"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/pkg/errors"
@@ -104,8 +105,12 @@ func ExtractUserIdFromJWT(ctx *gin.Context) (int, error) {
 func JWTAuthMiddleWare() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		err := ValidateJWT(ctx)
-		if err != nil {
-			ctx.String(http.StatusUnauthorized, "Unauthorized")
+		if apiErrors.HandleAPIError(
+			ctx,
+			"Authentication is required to access this resource.",
+			errors.Wrap(err, "Error occurred when validating JWT"),
+			http.StatusUnauthorized,
+		) {
 			ctx.Abort()
 			return
 		}

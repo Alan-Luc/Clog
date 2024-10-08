@@ -11,11 +11,18 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 func CreateUser(u *models.User) error {
 	if err := database.DB.Create(&u).Error; err != nil {
-		return err
+		if err.Error() == gorm.ErrDuplicatedKey.Error() {
+			return errors.Wrap(
+				err,
+				"Failed to create user: a user with the same ID already exists",
+			)
+		}
+		return errors.Wrap(err, "Failed to create user")
 	}
 	return nil
 }
@@ -24,7 +31,10 @@ func PrepareUser(u *models.User) error {
 	// hash password
 	hashedPW, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return err
+		return errors.Wrap(
+			err,
+			"Error occurred when hashing password",
+		)
 	}
 	u.Password = string(hashedPW)
 
@@ -47,12 +57,12 @@ func VerifyUser(username, password *string) (string, error) {
 	var pw string = *password
 	err = VerifyPassword(user.Password, pw)
 	if err != nil {
-		return "", errors.Wrap(err, "Error verifying password")
+		return "", errors.Wrap(err, "Error occurred when verifying password")
 	}
 
 	jwt, err := auth.GenerateJWT(user.ID)
 	if err != nil {
-		return "", errors.WithMessage(err, "Error generating JWT")
+		return "", errors.WithMessage(err, "Error occurred when generating JWT")
 	}
 
 	return jwt, nil
@@ -63,20 +73,26 @@ func VerifyPassword(hashedPw, password string) error {
 }
 
 func GetCurrentUserId(ctx *gin.Context) (int, error) {
-	userId, err := auth.ExtractUserIdFromJWT(ctx)
+	userID, err := auth.ExtractUserIdFromJWT(ctx)
 	if err != nil {
-		return 0, err
+		return 0, errors.WithMessage(err, "Error occurred when extracting user ID")
 	}
 
-	return userId, nil
+	return userID, nil
 }
 
-func GetCurrentUser(userId int) (models.User, error) {
+func GetCurrentUser(userID int) (models.User, error) {
 	var user models.User
 	var err error
 	// check if user in db
-	if err = database.DB.Model(&models.User{}).Where("id = ?", userId).Find(&user).Error; err != nil {
-		return models.User{}, err
+	if err = database.DB.Model(&models.User{}).Where("id = ?", userID).Find(&user).Error; err != nil {
+		return models.User{}, errors.Wrap(
+			err,
+			fmt.Sprintf(
+				"Error occurred when trying to retrieve user: user with id %d does not exist",
+				userID,
+			),
+		)
 	}
 
 	return user, nil

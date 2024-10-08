@@ -18,7 +18,7 @@ func CreateSession(s *models.Session) error {
 				"Failed to create session: a session with the same ID already exists",
 			)
 		}
-		return errors.Wrap(err, "Failed to create sesion")
+		return errors.Wrap(err, "Failed to create session")
 	}
 	return nil
 }
@@ -32,7 +32,10 @@ func FindAllSessionsByUserID(userID, page, limit int) (*[]models.Session, error)
 	offset := (page - 1) * limit
 	sessions, err = models.FindAllSessions(database.DB, userID, offset, limit)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithMessage(
+			err,
+			"Error occurred when finding sessions",
+		)
 	}
 	return sessions, nil
 }

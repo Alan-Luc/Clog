@@ -7,11 +7,38 @@ import (
 
 	"github.com/Alan-Luc/VertiLog/backend/models"
 	"github.com/Alan-Luc/VertiLog/backend/services"
+	"github.com/Alan-Luc/VertiLog/backend/utils/apiErrors"
 	"github.com/Alan-Luc/VertiLog/backend/utils/auth"
-	"github.com/Alan-Luc/VertiLog/backend/utils/gContext"
 	"github.com/Alan-Luc/VertiLog/backend/utils/validators"
 	"github.com/gin-gonic/gin"
 )
+
+func LogSessionHandler(ctx *gin.Context) {
+	var session models.Session
+	var userID int
+	var err error
+
+	err = ctx.ShouldBindJSON(&session)
+	if apiErrors.HandleAPIError(
+		ctx,
+		"Invalid input. Please check the submitted data and try again.",
+		err,
+		http.StatusBadRequest,
+	) {
+		return
+	}
+
+	userID, err = auth.ExtractUserIdFromJWT(ctx)
+	if apiErrors.HandleAPIError(
+		ctx,
+		"Authorization token is invalid or missing. Please log in and try again.",
+		err,
+		http.StatusUnauthorized,
+	) {
+		return
+	}
+	session.UserID = userID
+}
 
 func GetSessionByIDHandler(ctx *gin.Context) {
 	var session *models.Session
@@ -26,7 +53,7 @@ func GetSessionByIDHandler(ctx *gin.Context) {
 	limitParam := ctx.DefaultQuery("limit", "10")
 
 	page, limit, err = validators.ValidatePaginationParams(pageParam, limitParam)
-	if gContext.HandleAPIError(
+	if apiErrors.HandleAPIError(
 		ctx,
 		"Invalid pagination parameters. Please provide valid numeric values for page and limit.",
 		err,
@@ -36,7 +63,7 @@ func GetSessionByIDHandler(ctx *gin.Context) {
 	}
 
 	sessionID, err = strconv.Atoi(ctx.Param("id"))
-	if gContext.HandleAPIError(
+	if apiErrors.HandleAPIError(
 		ctx,
 		"Invalid session ID. Please ensure the session ID is a valid number.",
 		err,
@@ -46,7 +73,7 @@ func GetSessionByIDHandler(ctx *gin.Context) {
 	}
 
 	userID, err = auth.ExtractUserIdFromJWT(ctx)
-	if gContext.HandleAPIError(
+	if apiErrors.HandleAPIError(
 		ctx,
 		"Authorization token is invalid or missing. Please log in and try again.",
 		err,
@@ -56,7 +83,7 @@ func GetSessionByIDHandler(ctx *gin.Context) {
 	}
 
 	session, err = services.FindSessionByID(userID, sessionID, page, limit)
-	if gContext.HandleAPIError(
+	if apiErrors.HandleAPIError(
 		ctx,
 		"Session not found. Please check the session ID and try again.",
 		err,
@@ -86,7 +113,7 @@ func GetAllSessionsHandler(ctx *gin.Context) {
 	limitParam := ctx.DefaultQuery("limit", "10")
 
 	page, limit, err = validators.ValidatePaginationParams(pageParam, limitParam)
-	if gContext.HandleAPIError(
+	if apiErrors.HandleAPIError(
 		ctx,
 		"Invalid pagination parameters. Please provide valid numeric values for page and limit.",
 		err,
@@ -96,7 +123,7 @@ func GetAllSessionsHandler(ctx *gin.Context) {
 	}
 
 	userID, err = auth.ExtractUserIdFromJWT(ctx)
-	if gContext.HandleAPIError(
+	if apiErrors.HandleAPIError(
 		ctx,
 		"Authorization token is invalid or missing. Please log in and try again.",
 		err,
@@ -106,7 +133,7 @@ func GetAllSessionsHandler(ctx *gin.Context) {
 	}
 
 	sessions, err = services.FindAllSessionsByUserID(userID, page, limit)
-	if gContext.HandleAPIError(
+	if apiErrors.HandleAPIError(
 		ctx,
 		"No sessions found. Please try again later.",
 		err,
@@ -135,7 +162,7 @@ func GetSessionSummariesByDateHandler(ctx *gin.Context) {
 	endDateStr := ctx.Query("endDate")
 
 	startDate, endDate, err = validators.ValidateAndParseDateSpanParams(startDateStr, endDateStr)
-	if gContext.HandleAPIError(
+	if apiErrors.HandleAPIError(
 		ctx,
 		"Invalid date range. Please ensure that the start date and end date are valid.",
 		err,
@@ -145,7 +172,7 @@ func GetSessionSummariesByDateHandler(ctx *gin.Context) {
 	}
 
 	userID, err = auth.ExtractUserIdFromJWT(ctx)
-	if gContext.HandleAPIError(
+	if apiErrors.HandleAPIError(
 		ctx,
 		"Authorization token is invalid or missing. Please log in and try again.",
 		err,
@@ -155,7 +182,7 @@ func GetSessionSummariesByDateHandler(ctx *gin.Context) {
 	}
 
 	sessionSummaries, err = services.FindSessionsSummariesByDate(userID, startDate, endDate)
-	if gContext.HandleAPIError(
+	if apiErrors.HandleAPIError(
 		ctx,
 		"No session summaries found for the given date range.",
 		err,

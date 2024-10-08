@@ -1,9 +1,11 @@
 package models
 
 import (
+	"fmt"
 	"log"
 	"time"
 
+	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
 
@@ -37,7 +39,10 @@ func FindAllSessions(db *gorm.DB, userID, offset, limit int) (*[]Session, error)
 
 	if err != nil {
 		log.Printf("Database error: %v", err) // Log the error if query fails
-		return nil, err
+		return nil, errors.Wrap(
+			err,
+			fmt.Sprintf("Error finding sessions for user with id %d", userID),
+		)
 	}
 
 	return &sessions, nil
@@ -53,24 +58,31 @@ func (s *Session) FindById(db *gorm.DB, userID, sessionID, offset, limit int) er
 
 	if err != nil {
 		log.Printf("Database error: %v", err) // Log the error if query fails
-		return err
+		return errors.Wrap(
+			err,
+			fmt.Sprintf("Error finding sessions with id %d for user with id %d", sessionID, userID),
+		)
 	}
 
 	return nil
 }
 
-func (s *Session) FindByDate(db *gorm.DB, userId int, sessionDate time.Time) error {
+func (s *Session) FindByDate(db *gorm.DB, userID int, sessionDate time.Time) error {
 	err := db.
-		// Preload("Climbs", func(db *gorm.DB) *gorm.DB {
-		// 	return db.Limit(limit).Offset(offset).Order("created_at DESC")
-		// }).
 		Preload("Climbs").
-		Where("user_id = ? AND date = ?", userId, sessionDate).
+		Where("user_id = ? AND date = ?", userID, sessionDate).
 		Take(s).Error
 
 	if err != nil {
 		log.Printf("Database error: %v", err) // Log the error if query fails
-		return err
+		return errors.Wrap(
+			err,
+			fmt.Sprintf(
+				"Error finding session on date %s for user with id %d",
+				sessionDate,
+				userID,
+			),
+		)
 	}
 
 	return nil
@@ -93,7 +105,10 @@ func FindSessionSummaries(
 
 	if err != nil {
 		log.Printf("Database error: %v", err) // Log the error if query fails
-		return nil, err
+		return nil, errors.Wrap(
+			err,
+			fmt.Sprintf("Error finding session summaries for user with id %d", userID),
+		)
 	}
 
 	return &summaries, nil

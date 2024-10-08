@@ -10,6 +10,7 @@ import (
 	_ "github.com/lib/pq"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 var DB *gorm.DB
@@ -22,6 +23,7 @@ func ConnectDB() {
 	// open GORM connection
 	DB, err = gorm.Open(postgres.Open(connStr), &gorm.Config{
 		PrepareStmt: true,
+		Logger:      logger.Default.LogMode(logger.Info),
 	})
 	if err != nil {
 		log.Fatal(err)

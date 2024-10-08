@@ -3,6 +3,7 @@ package apiErrors
 import (
 	"fmt"
 	"log"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -34,7 +35,12 @@ func HandleAPIError(ctx *gin.Context, errMsg string, err error, statusCode int) 
 		log.Printf("Error details: %v\n", err)
 		log.Printf("Stack trace: \n %+v", err)
 
-		ctx.JSON(statusCode, gin.H{"error": errMsg})
+		ctx.JSON(statusCode,
+			gin.H{
+				"error":   http.StatusText(statusCode),
+				"message": errMsg,
+			},
+		)
 		return true
 	}
 	return false

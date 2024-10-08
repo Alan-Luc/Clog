@@ -18,7 +18,7 @@ func CreateClimb(c *models.Climb) error {
 		if err.Error() == gorm.ErrDuplicatedKey.Error() {
 			return errors.Wrap(
 				err,
-				"Failed to create climb: a climb with the same ID already exists",
+				"Error occurred when creating climb: a climb with the same ID already exists",
 			)
 		}
 		return errors.Wrap(err, "Failed to create climb:")
@@ -86,7 +86,7 @@ func FindAllClimbsByUserID(userID, page, limit int) (*[]models.Climb, error) {
 	if err != nil {
 		return nil, errors.WithMessage(
 			err,
-			fmt.Sprintf("Error occurred when finding climbs for user with id %d", userID),
+			"Error occurred when finding climbs",
 		)
 	}
 

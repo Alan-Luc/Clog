@@ -5,7 +5,7 @@ import (
 
 	"github.com/Alan-Luc/VertiLog/backend/models"
 	"github.com/Alan-Luc/VertiLog/backend/services"
-	"github.com/Alan-Luc/VertiLog/backend/utils/gContext"
+	"github.com/Alan-Luc/VertiLog/backend/utils/apiErrors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -14,7 +14,7 @@ func RegisterUserHandler(ctx *gin.Context) {
 	var err error
 
 	err = ctx.ShouldBindJSON(&user)
-	if gContext.HandleAPIError(
+	if apiErrors.HandleAPIError(
 		ctx,
 		"Invalid input. Please check the submitted data and try again.",
 		err,
@@ -24,7 +24,7 @@ func RegisterUserHandler(ctx *gin.Context) {
 	}
 
 	err = services.PrepareUser(&user)
-	if gContext.HandleAPIError(
+	if apiErrors.HandleAPIError(
 		ctx,
 		"An error occurred while processing your request. Please try again later.",
 		err,
@@ -34,7 +34,7 @@ func RegisterUserHandler(ctx *gin.Context) {
 	}
 
 	err = services.CreateUser(&user)
-	if gContext.HandleAPIError(
+	if apiErrors.HandleAPIError(
 		ctx,
 		"We encountered an issue while registering your account. Please try again later.",
 		err,
@@ -54,7 +54,7 @@ func LoginUserHandler(ctx *gin.Context) {
 	var err error
 
 	err = ctx.ShouldBindJSON(&loginInput)
-	if gContext.HandleAPIError(
+	if apiErrors.HandleAPIError(
 		ctx,
 		"Invalid input. Please check the submitted data and try again.",
 		err,
@@ -64,7 +64,7 @@ func LoginUserHandler(ctx *gin.Context) {
 	}
 
 	jwt, err := services.VerifyUser(&loginInput.Username, &loginInput.Password)
-	if gContext.HandleAPIError(
+	if apiErrors.HandleAPIError(
 		ctx,
 		"Invalid username or password. Please check your credentials and try again.",
 		err,
