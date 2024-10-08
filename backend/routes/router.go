@@ -5,11 +5,17 @@ import (
 	"net/http"
 
 	"github.com/Alan-Luc/VertiLog/backend/utils/auth"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
 func SetupRouter() *gin.Engine {
 	router := gin.Default()
+
+	// cors
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AllowOrigins = []string{"http://localhost:3000"}
+	router.Use(cors.New(corsConfig))
 
 	// public routes
 	authRoutes(router.Group("/"))
