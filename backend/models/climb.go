@@ -50,7 +50,7 @@ func (c *Climb) FindAll(db *gorm.DB, userID, offset, limit int) ([]Climb, error)
 	return climbs, nil
 }
 
-func (c *Climb) FindById(db *gorm.DB, userID, climbID int) error {
+func (c *Climb) FindByID(db *gorm.DB, userID, climbID int) error {
 	err := db.
 		Where("user_id = ? AND id = ?", userID, climbID).
 		Take(c).Error

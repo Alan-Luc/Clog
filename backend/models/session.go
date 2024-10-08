@@ -48,8 +48,9 @@ func FindAllSessions(db *gorm.DB, userID, offset, limit int) (*[]Session, error)
 	return &sessions, nil
 }
 
-func (s *Session) FindById(db *gorm.DB, userID, sessionID, offset, limit int) error {
+func (s *Session) FindByID(db *gorm.DB, userID, sessionID, offset, limit int) error {
 	err := db.
+		// climbs can be paginated within a session
 		Preload("Climbs", func(db *gorm.DB) *gorm.DB {
 			return db.Limit(limit).Offset(offset).Order("created_at DESC")
 		}).

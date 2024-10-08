@@ -12,7 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func LogClimbHandler(ctx *gin.Context) {
+func ClimbLogHandler(ctx *gin.Context) {
 	var climb models.Climb
 	var userID int
 	var err error
@@ -64,7 +64,7 @@ func LogClimbHandler(ctx *gin.Context) {
 	})
 }
 
-func GetClimbByIDHandler(ctx *gin.Context) {
+func ClimbGetByIDHandler(ctx *gin.Context) {
 	var climb *models.Climb
 	var climbID int
 	var userID int
@@ -105,7 +105,7 @@ func GetClimbByIDHandler(ctx *gin.Context) {
 	})
 }
 
-func GetAllClimbsHandler(ctx *gin.Context) {
+func ClimbGetAllHandler(ctx *gin.Context) {
 	var climbs *[]models.Climb
 	var userID int
 	var page int

@@ -46,7 +46,7 @@ func FindClimbByID(userID, climbID int) (*models.Climb, error) {
 	var climb models.Climb
 	var err error
 
-	err = climb.FindById(database.DB, userID, climbID)
+	err = climb.FindByID(database.DB, userID, climbID)
 	if err != nil {
 		return nil, errors.Wrap(
 			err,

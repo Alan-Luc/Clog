@@ -19,6 +19,7 @@ func SetupRouter() *gin.Engine {
 	protected.Use(auth.JWTAuthMiddleWare())
 	sessionRoutes(protected)
 	climbRoutes(protected)
+	userRoutes(protected)
 
 	return router
 }

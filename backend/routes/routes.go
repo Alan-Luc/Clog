@@ -7,18 +7,22 @@ import (
 
 // Route grouping
 func authRoutes(router *gin.RouterGroup) {
-	router.POST("/register", handlers.RegisterUserHandler)
-	router.POST("/login", handlers.LoginUserHandler)
+	router.POST("/register", handlers.UserRegisterHandler)
+	router.POST("/login", handlers.UserLoginHandler)
 }
 
 func sessionRoutes(router *gin.RouterGroup) {
-	router.GET("/sessions/:id", handlers.GetSessionByIDHandler)
-	router.GET("/sessions", handlers.GetAllSessionsHandler)
-	router.GET("/sessions/summaries", handlers.GetSessionSummariesByDateHandler)
+	router.GET("/sessions", handlers.SessionGetAllHandler)
+	router.GET("/sessions/:id", handlers.SessionGetByIDHandler)
+	router.GET("/sessions/summaries", handlers.SessionGetSummariesByDateHandler)
 }
 
 func climbRoutes(router *gin.RouterGroup) {
-	router.POST("/logClimb", handlers.LogClimbHandler)
-	router.GET("/climbs/:id", handlers.GetClimbByIDHandler)
-	router.GET("/climbs", handlers.GetAllClimbsHandler)
+	router.GET("/climbs", handlers.ClimbGetAllHandler)
+	router.GET("/climbs/:id", handlers.ClimbGetByIDHandler)
+	router.POST("/logClimb", handlers.ClimbLogHandler)
+}
+
+func userRoutes(router *gin.RouterGroup) {
+	router.PATCH("/profile", handlers.UserProfileHandler)
 }

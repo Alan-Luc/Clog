@@ -13,7 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func LogSessionHandler(ctx *gin.Context) {
+func SessionLogHandler(ctx *gin.Context) {
 	var session models.Session
 	var userID int
 	var err error
@@ -40,7 +40,7 @@ func LogSessionHandler(ctx *gin.Context) {
 	session.UserID = userID
 }
 
-func GetSessionByIDHandler(ctx *gin.Context) {
+func SessionGetByIDHandler(ctx *gin.Context) {
 	var session *models.Session
 	var sessionID int
 	var userID int
@@ -52,6 +52,7 @@ func GetSessionByIDHandler(ctx *gin.Context) {
 	pageParam := ctx.DefaultQuery("page", "1")
 	limitParam := ctx.DefaultQuery("limit", "10")
 
+	// pagination for climbs within a session
 	page, limit, err = validators.ValidatePaginationParams(pageParam, limitParam)
 	if apiErrors.HandleAPIError(
 		ctx,
@@ -101,7 +102,7 @@ func GetSessionByIDHandler(ctx *gin.Context) {
 	})
 }
 
-func GetAllSessionsHandler(ctx *gin.Context) {
+func SessionGetAllHandler(ctx *gin.Context) {
 	var sessions *[]models.Session
 	var userID int
 	var page int
@@ -151,7 +152,7 @@ func GetAllSessionsHandler(ctx *gin.Context) {
 	})
 }
 
-func GetSessionSummariesByDateHandler(ctx *gin.Context) {
+func SessionGetSummariesByDateHandler(ctx *gin.Context) {
 	var sessionSummaries *[]models.SessionSummary
 	var userID int
 	var startDate time.Time

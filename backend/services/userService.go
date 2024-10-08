@@ -44,22 +44,24 @@ func PrepareUser(u *models.User) error {
 	return nil
 }
 
-func VerifyUser(username, password *string) (string, error) {
+func VerifyUser(username, password string) (string, error) {
 	var user models.User
 	var err error
 	// check if user in db
-	if err = database.DB.Model(&models.User{}).Where("username = ?", username).Find(&user).Error; err != nil {
-		errMsg := fmt.Sprintf("Failed to find user with username '%s'", *username)
+	err = user.FindByUsername(database.DB, username)
+	if err != nil {
+		errMsg := fmt.Sprintf("Failed to find user with username '%s'", username)
 		return "", errors.WithMessage(err, errMsg)
 	}
 
 	// verify password
-	var pw string = *password
+	var pw string = password
 	err = VerifyPassword(user.Password, pw)
 	if err != nil {
 		return "", errors.Wrap(err, "Error occurred when verifying password")
 	}
 
+	// TODO make this its own function that checks cache for issued tokens
 	jwt, err := auth.GenerateJWT(user.ID)
 	if err != nil {
 		return "", errors.WithMessage(err, "Error occurred when generating JWT")
@@ -68,8 +70,12 @@ func VerifyUser(username, password *string) (string, error) {
 	return jwt, nil
 }
 
-func VerifyPassword(hashedPw, password string) error {
-	return bcrypt.CompareHashAndPassword([]byte(hashedPw), []byte(password))
+func VerifyPassword(hashedPW, password string) error {
+	return bcrypt.CompareHashAndPassword([]byte(hashedPW), []byte(password))
+}
+
+func HashPassword(password string) ([]byte, error) {
+	return bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 }
 
 func GetCurrentUserId(ctx *gin.Context) (int, error) {
@@ -81,19 +87,50 @@ func GetCurrentUserId(ctx *gin.Context) (int, error) {
 	return userID, nil
 }
 
-func GetCurrentUser(userID int) (models.User, error) {
+func GetCurrentUser(userID int) (*models.User, error) {
 	var user models.User
 	var err error
 	// check if user in db
-	if err = database.DB.Model(&models.User{}).Where("id = ?", userID).Find(&user).Error; err != nil {
-		return models.User{}, errors.Wrap(
+	err = user.FindByID(database.DB, userID)
+	if err != nil {
+		return nil, errors.Wrap(
 			err,
-			fmt.Sprintf(
-				"Error occurred when trying to retrieve user: user with id %d does not exist",
-				userID,
-			),
+			"Error occurred when finding user",
 		)
 	}
 
-	return user, nil
+	return &user, nil
+}
+
+func UpdateUserPassword(userID int, currPW, newPW string) error {
+	var user *models.User
+	var err error
+
+	user, err = GetCurrentUser(userID)
+	if err != nil || user == nil {
+		return errors.Wrap(err, "Error occurred when fetching user for password update")
+	}
+
+	err = VerifyPassword(user.Password, currPW)
+	if err != nil {
+		return errors.Wrap(err, "Current password is incorrect")
+	}
+
+	hashedNewPW, err := HashPassword(newPW)
+	if err != nil {
+		return errors.Wrap(
+			err,
+			"Error occurred when hashing new password",
+		)
+	}
+
+	err = user.UpdatePassword(database.DB, userID, string(hashedNewPW))
+	if err != nil {
+		return errors.Wrap(
+			err,
+			"Error occurred when updating password in database",
+		)
+	}
+
+	return nil
 }

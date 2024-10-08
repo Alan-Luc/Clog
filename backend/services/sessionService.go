@@ -47,7 +47,8 @@ func FindSessionByID(userID, sessionID, page, limit int) (*models.Session, error
 	// TODO: cache page limit
 
 	offset := (page - 1) * limit
-	err = session.FindById(database.DB, userID, sessionID, offset, limit)
+	// pagination for climbs within a session
+	err = session.FindByID(database.DB, userID, sessionID, offset, limit)
 	if err != nil {
 		return nil, errors.Wrap(
 			err,
