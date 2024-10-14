@@ -26,8 +26,7 @@ type Climb struct {
 }
 
 func (c *Climb) CalculateLoad() float64 {
-	load := (c.FailedAttemptSum + float64(c.Tops)) * float64(c.VGrade)
-	return load
+	return (c.FailedAttemptSum + float64(c.Tops)) * float64(c.VGrade)
 }
 
 func (c *Climb) FindAll(db *gorm.DB, userID, offset, limit int) ([]Climb, error) {
