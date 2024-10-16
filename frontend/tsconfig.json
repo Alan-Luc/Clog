@@ -1,5 +1,8 @@
 {
   "compilerOptions": {
+		"plugins": [{ "name": "@vue/typescript-plugin"}],
+
+
     "target": "ES2020",
     "useDefineForClassFields": true,
     "module": "ESNext",
@@ -19,14 +22,16 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
+		"allowSyntheticDefaultImports": true,
 
 		/* Paths */
 		"baseUrl": ".",
 		"paths": {
-			"@/*": ["./src/*"],
-			"@components/*": ["./src/components/*"],
-		},
+			"@/*": ["src/*"],
+			"@components/*": ["src/components/*"],
+			"@views/*": ["src/components/views/*"],
+		}
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue"],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "src/**/*.d.ts"],
+  "references": [{ "path": "./tsconfig.node.json" }],
 }
