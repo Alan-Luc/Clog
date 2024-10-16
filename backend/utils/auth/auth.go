@@ -108,7 +108,7 @@ func JWTAuthMiddleWare() gin.HandlerFunc {
 		if apiErrors.HandleAPIError(
 			ctx,
 			"Authentication is required to access this resource.",
-			errors.Wrap(err, "Error occurred when validating JWT"),
+			errors.WithMessage(err, "Error occurred when validating JWT"),
 			http.StatusUnauthorized,
 		) {
 			ctx.Abort()
