@@ -44,30 +44,30 @@ func PrepareUser(u *models.User) error {
 	return nil
 }
 
-func VerifyUser(username, password string) (string, error) {
+func VerifyUser(username, password string) (string, string, error) {
 	var user models.User
 	var err error
 	// check if user in db
 	err = user.FindByUsername(database.DB, username)
 	if err != nil {
 		errMsg := fmt.Sprintf("Failed to find user with username '%s'", username)
-		return "", errors.WithMessage(err, errMsg)
+		return "", "", errors.WithMessage(err, errMsg)
 	}
 
 	// verify password
 	var pw string = password
 	err = VerifyPassword(user.Password, pw)
 	if err != nil {
-		return "", errors.Wrap(err, "Error occurred when verifying password")
+		return "", "", errors.Wrap(err, "Error occurred when verifying password")
 	}
 
 	// TODO make this its own function that checks cache for issued tokens
-	jwt, err := auth.GenerateJWT(user.ID)
+	accessToken, refreshToken, err := auth.GenerateJWT(user.ID)
 	if err != nil {
-		return "", errors.WithMessage(err, "Error occurred when generating JWT")
+		return "", "", errors.WithMessage(err, "Error occurred when generating JWT")
 	}
 
-	return jwt, nil
+	return accessToken, refreshToken, nil
 }
 
 func VerifyPassword(hashedPW, password string) error {

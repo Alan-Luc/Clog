@@ -9,6 +9,7 @@ import (
 func authRoutes(router *gin.RouterGroup) {
 	router.POST("/register", handlers.UserRegisterHandler)
 	router.POST("/login", handlers.UserLoginHandler)
+	router.POST("/refresh", handlers.UserRefreshTokenHandler)
 }
 
 func sessionRoutes(router *gin.RouterGroup) {

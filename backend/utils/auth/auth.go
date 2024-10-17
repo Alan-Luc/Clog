@@ -2,10 +2,8 @@ package auth
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -15,51 +13,111 @@ import (
 	"github.com/pkg/errors"
 )
 
-const TOKEN_TTL_HRS = "1"
+const (
+	ACCESS_TOKEN_TTL  = "1h"
+	REFRESH_TOKEN_TTL = "168h" // 1 week
+)
 
-func GenerateJWT(userId int) (string, error) {
-	// ttlStr := os.Getenv("TOKEN_TTL_HRS")
-	ttlStr := TOKEN_TTL_HRS
-	if ttlStr == "" {
-		return "", errors.New("TOKEN_TTL_HRS environment variable is missing")
-	}
-
-	ttl, err := strconv.Atoi(ttlStr)
-	if err != nil {
-		return "", errors.Wrap(err, "Failed to convert TOKEN_TTL_HRS to int")
-	}
-
-	// generate JWT claims
-	claims := jwt.MapClaims{}
-	claims["authorized"] = true
-	claims["userId"] = userId
-	claims["exp"] = time.Now().Add(time.Hour * time.Duration(ttl)).Unix()
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	// sign the JWT
-	tokenString, err := token.SignedString([]byte(os.Getenv("API_SECRET")))
-	if err != nil {
-		return "", errors.Wrap(err, "Failed to sign JWT")
-	}
-
-	return tokenString, nil
+type CustomClaims struct {
+	UserID int `json:"userID"`
+	jwt.RegisteredClaims
 }
 
-func ValidateJWT(ctx *gin.Context) error {
-	tokenString := ExtractJWT(ctx)
-	// Parse takes the token string and a function for looking up the key. The latter is especially
-	// useful if you use multiple keys for your application.  The standard is to use 'kid' in the
-	// head of the token to identify which key to use, but the parsed token (head and claims) is provided
-	// to the callback, providing flexibility.
-	_, err := jwt.Parse(tokenString, ParseJWT)
+func GenerateJWT(userID int) (access, refresh string, err error) {
+	apiSecret := os.Getenv("API_SECRET")
+	if apiSecret == "" {
+		return "", "", errors.New("Missing env var API_SECRET")
+	}
+
+	refreshSecret := os.Getenv("REFRESH_SECRET")
+	if refreshSecret == "" {
+		return "", "", errors.New("Missing env var REFRESH_SECRET")
+	}
+
+	accessTTL, err := time.ParseDuration(ACCESS_TOKEN_TTL)
+	if err != nil {
+		return "", "", errors.Wrap(err, "Failed to parse ACCESS_TOKEN_TTL")
+	}
+
+	refreshTTL, err := time.ParseDuration(REFRESH_TOKEN_TTL)
+	if err != nil {
+		return "", "", errors.Wrap(err, "Failed to parse REFRESH_TOKEN_TTL")
+	}
+
+	// generate access token claims
+	accessTokenClaims := CustomClaims{
+		UserID: userID,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(accessTTL)),
+		},
+	}
+	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, accessTokenClaims)
+
+	// generate refresh token claims
+	refreshTokenClaims := CustomClaims{
+		UserID: userID,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(refreshTTL)),
+		},
+	}
+	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshTokenClaims)
+
+	// sign the access token
+	accessTokenStr, err := accessToken.SignedString([]byte(apiSecret))
+	if err != nil {
+		return "", "", errors.Wrap(err, "Failed to sign access token")
+	}
+
+	// sign the refresh token
+	refreshTokenStr, err := refreshToken.SignedString([]byte(refreshSecret))
+	if err != nil {
+		return "", "", errors.Wrap(err, "Failed to sign refresh token")
+	}
+
+	return accessTokenStr, refreshTokenStr, nil
+}
+
+func ValidateJWT(ctx *gin.Context, isRefreshToken bool) error {
+	var secret string
+	var tokenString string
+	var err error
+
+	if isRefreshToken {
+		secret = os.Getenv("REFRESH_SECRET")
+		tokenString, err = ExtractRefreshToken(ctx)
+	} else {
+		secret = os.Getenv("API_SECRET")
+		tokenString, err = ExtractAccessToken(ctx)
+	}
+
+	if err != nil {
+		return errors.WithMessage(err, "Error occurred when extracting token")
+	}
+
+	token, err := jwt.ParseWithClaims(
+		tokenString,
+		&CustomClaims{},
+		func(t *jwt.Token) (interface{}, error) {
+			return ParseJWTSecret(t, secret)
+		},
+	)
 	if err != nil {
 		return errors.Wrap(err, "Failed to parse the JWT")
+	}
+
+	claims, ok := token.Claims.(*CustomClaims)
+	if ok && token.Valid {
+		ctx.Set("userID", claims.UserID)
 	}
 
 	return nil
 }
 
-func ParseJWT(t *jwt.Token) (interface{}, error) {
+func ParseJWTSecret(t *jwt.Token, secret string) (interface{}, error) {
+	if secret == "" {
+		return nil, errors.New("JWT secret is missing")
+	}
+
 	// validate the alg
 	if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 		err := fmt.Errorf("Unexpected signing method: %v", t.Header["alg"])
@@ -67,44 +125,59 @@ func ParseJWT(t *jwt.Token) (interface{}, error) {
 	}
 
 	// return api secret
-	return []byte(os.Getenv("API_SECRET")), nil
+	return []byte(secret), nil
 }
 
-func ExtractJWT(ctx *gin.Context) string {
+func ExtractAccessToken(ctx *gin.Context) (string, error) {
 	// check request header
 	bearerToken := ctx.Request.Header.Get("Authorization")
 	splitToken := strings.Split(bearerToken, " ")
 	if len(splitToken) == 2 {
-		return splitToken[1]
+		return splitToken[1], nil
 	}
 
-	return ""
+	return "", errors.New("Access token is missing or was not provided")
+}
+
+func ExtractRefreshToken(ctx *gin.Context) (string, error) {
+	refreshToken, err := ctx.Cookie("refreshToken")
+	if err != nil {
+		return "", errors.Wrap(err, "Refresh token is missing or was not provided")
+	}
+
+	return refreshToken, nil
 }
 
 func ExtractUserIdFromJWT(ctx *gin.Context) (int, error) {
-	tokenString := ExtractJWT(ctx)
-	t, err := jwt.Parse(tokenString, ParseJWT)
+	tokenString, err := ExtractAccessToken(ctx)
 	if err != nil {
-		return 0, errors.Wrap(err, "Error occurred when parsing JWT")
+		return 0, errors.WithMessage(err, "Error occurred when extracting access token")
 	}
 
-	claims, ok := t.Claims.(jwt.MapClaims)
-	log.Println(claims["userId"])
-	if ok && t.Valid {
-		userId, ok := claims["userId"].(float64)
-		if !ok {
-			return 0, nil
-		} else {
-			return int(userId), nil
-		}
+	secret := os.Getenv("API_SECRET")
+
+	token, err := jwt.ParseWithClaims(
+		tokenString,
+		&CustomClaims{},
+		func(t *jwt.Token) (interface{}, error) {
+			return ParseJWTSecret(t, secret)
+		},
+	)
+	if err != nil {
+		return 0, errors.Wrap(err, "Failed to parse the JWT")
 	}
 
-	return 0, nil
+	claims, ok := token.Claims.(*CustomClaims)
+	if ok && token.Valid {
+		return claims.UserID, nil
+	}
+
+	return 0, errors.New("Failed to extract userID")
 }
 
 func JWTAuthMiddleWare() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		err := ValidateJWT(ctx)
+		err := ValidateJWT(ctx, false)
 		if apiErrors.HandleAPIError(
 			ctx,
 			"Authentication is required to access this resource.",

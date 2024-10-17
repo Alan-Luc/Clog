@@ -64,7 +64,7 @@ func UserLoginHandler(ctx *gin.Context) {
 		return
 	}
 
-	jwt, err := services.VerifyUser(loginInput.Username, loginInput.Password)
+	accessToken, refreshToken, err := services.VerifyUser(loginInput.Username, loginInput.Password)
 	if apiErrors.HandleAPIError(
 		ctx,
 		"Invalid username or password. Please check your credentials and try again.",
@@ -74,7 +74,11 @@ func UserLoginHandler(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"token": jwt})
+	ctx.SetCookie("refreshToken", refreshToken, 3600*24*7, "/", "", false, true)
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"access_token": accessToken,
+	})
 }
 
 func UserProfileHandler(ctx *gin.Context) {
@@ -114,5 +118,37 @@ func UserProfileHandler(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "Password updated successfully",
+	})
+}
+
+func UserRefreshTokenHandler(ctx *gin.Context) {
+	var userID int
+	var newAccessToken string
+	var err error
+
+	err = auth.ValidateJWT(ctx, true)
+	if apiErrors.HandleAPIError(
+		ctx,
+		"Authorization token is invalid or missing. Please log in and try again.",
+		err,
+		http.StatusUnauthorized,
+	) {
+		return
+	}
+
+	userID = ctx.GetInt("userID")
+
+	newAccessToken, _, err = auth.GenerateJWT(userID)
+	if apiErrors.HandleAPIError(
+		ctx,
+		"An error occurred while processing your request. Please try again later.",
+		err,
+		http.StatusInternalServerError,
+	) {
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"token": newAccessToken,
 	})
 }

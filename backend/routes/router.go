@@ -15,6 +15,8 @@ func SetupRouter() *gin.Engine {
 	// cors
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowOrigins = []string{"http://localhost:3000"}
+	corsConfig.ExposeHeaders = append(corsConfig.ExposeHeaders, "Set-Cookie")
+	corsConfig.AllowCredentials = true
 	router.Use(cors.New(corsConfig))
 
 	// public routes
