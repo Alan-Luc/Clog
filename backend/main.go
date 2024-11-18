@@ -3,9 +3,9 @@ package main
 import (
 	"log"
 
-	"github.com/Alan-Luc/VertiLog/backend/database"
-	"github.com/Alan-Luc/VertiLog/backend/routes"
-	"github.com/Alan-Luc/VertiLog/backend/utils/server"
+	"github.com/Alan-Luc/clog/backend/database"
+	"github.com/Alan-Luc/clog/backend/routes"
+	"github.com/Alan-Luc/clog/backend/utils/server"
 	"github.com/joho/godotenv"
 )
 

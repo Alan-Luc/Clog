@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"github.com/Alan-Luc/VertiLog/backend/handlers"
+	"github.com/Alan-Luc/clog/backend/handlers"
 	"github.com/gin-gonic/gin"
 )
 

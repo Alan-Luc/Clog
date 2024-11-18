@@ -1,4 +1,4 @@
-module github.com/Alan-Luc/VertiLog/backend
+module github.com/Alan-Luc/clog/backend
 
 go 1.22.0
 

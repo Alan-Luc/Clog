@@ -3,10 +3,10 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/Alan-Luc/VertiLog/backend/models"
-	"github.com/Alan-Luc/VertiLog/backend/services"
-	"github.com/Alan-Luc/VertiLog/backend/utils/apiErrors"
-	"github.com/Alan-Luc/VertiLog/backend/utils/auth"
+	"github.com/Alan-Luc/clog/backend/models"
+	"github.com/Alan-Luc/clog/backend/services"
+	"github.com/Alan-Luc/clog/backend/utils/apiErrors"
+	"github.com/Alan-Luc/clog/backend/utils/auth"
 	"github.com/gin-gonic/gin"
 )
 

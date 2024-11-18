@@ -5,9 +5,9 @@ import (
 	"html"
 	"strings"
 
-	"github.com/Alan-Luc/VertiLog/backend/database"
-	"github.com/Alan-Luc/VertiLog/backend/models"
-	"github.com/Alan-Luc/VertiLog/backend/utils/auth"
+	"github.com/Alan-Luc/clog/backend/database"
+	"github.com/Alan-Luc/clog/backend/models"
+	"github.com/Alan-Luc/clog/backend/utils/auth"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"

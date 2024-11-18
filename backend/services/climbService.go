@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Alan-Luc/VertiLog/backend/database"
-	"github.com/Alan-Luc/VertiLog/backend/models"
+	"github.com/Alan-Luc/clog/backend/database"
+	"github.com/Alan-Luc/clog/backend/models"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )

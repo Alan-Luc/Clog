@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Alan-Luc/VertiLog/backend/utils/apiErrors"
+	"github.com/Alan-Luc/clog/backend/utils/apiErrors"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/pkg/errors"

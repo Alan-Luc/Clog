@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/Alan-Luc/VertiLog/backend/utils/auth"
+	"github.com/Alan-Luc/clog/backend/utils/auth"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
